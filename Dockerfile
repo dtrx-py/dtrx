@@ -44,7 +44,7 @@ ENV PATH=${PATH}:/home/${UNAME}/.local/bin
 
 USER ${UNAME}
 
-# Need tox to run the tests
-RUN pip3 install tox==3.15.2
+# Need tox to run the tests, docutils for rst2man.py
+RUN pip3 install tox==3.15.2 docutils==0.16
 
 WORKDIR /mnt/workspace

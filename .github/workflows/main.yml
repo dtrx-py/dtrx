@@ -31,3 +31,20 @@ jobs:
         with:
           name: ${{ matrix.python }}-wheel-output
           path: .tox/${{ matrix.python }}/dist/
+
+  manpage:
+    steps:
+      # checkout v2, with recursive submodule update
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      # build the Docker image we use to run the tests
+      - name: test.sh
+        run: ./test.sh
+
+      # upload-artifact to save the output wheels
+      - uses: actions/upload-artifact@v2
+        with:
+          name: manpage-output
+          path: dtrx.1

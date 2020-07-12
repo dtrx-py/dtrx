@@ -1,12 +1,24 @@
-# dtrx
+====
+dtrx
+====
 
-> cleanly extract many archive types
+----------------------------------
+cleanly extract many archive types
+----------------------------------
 
-## SYNOPSIS
+:Author: Brett Smith <brettcsmith@brettcsmith.org>
+:Date:   2011-11-19
+:Copyright: 2006-2011 Brett Smith and others
 
-`dtrx [OPTIONS] ARCHIVE [ARCHIVE ...]`
+:Manual section: 1
 
-## DESCRIPTION
+SYNOPSIS
+========
+
+dtrx [OPTIONS] ARCHIVE [ARCHIVE ...]
+
+DESCRIPTION
+===========
 
 dtrx extracts archives in a number of different formats; it currently
 supports tar, zip (including self-extracting .exe files), cpio, rpm, deb,
@@ -29,11 +41,11 @@ You may specify URLs as arguments as well.  If you do, dtrx will use `wget
 downloads.  This may fail if you already have a file in the current
 directory with the same name as the file you're trying to download.
 
-## OPTIONS
+OPTIONS
+=======
 
 dtrx supports a number of options to mandate specific behavior:
 
-```
 -r, --recursive
    With this option, dtrx will search inside the archives you specify to see
    if any of the contents are themselves archives, and extract those as
@@ -93,28 +105,24 @@ dtrx supports a number of options to mandate specific behavior:
 
 --version
    Display dtrx's version, copyright, and license information.
-```
 
-:Author: Brett Smith <brettcsmith@brettcsmith.org>
-:Date:   2011-11-19
-:Copyright:
+LICENSE
+=======
 
-  dtrx 7.1 is copyright © 2006-2011 Brett Smith and others.  Feel free to
-  send comments, bug reports, patches, and so on.  You can find the latest
-  version of dtrx on its home page at
-  <http://www.brettcsmith.org/2007/dtrx/>.
+dtrx 7.1 is copyright © 2006-2011 Brett Smith and others.  Feel free to
+send comments, bug reports, patches, and so on.  You can find the latest
+version of dtrx on its home page at
+<http://www.brettcsmith.org/2007/dtrx/>.
 
-  dtrx is free software; you can redistribute it and/or modify it under the
-  terms of the GNU General Public License as published by the Free Software
-  Foundation; either version 3 of the License, or (at your option) any
-  later version.
+dtrx is free software; you can redistribute it and/or modify it under the
+terms of the GNU General Public License as published by the Free Software
+Foundation; either version 3 of the License, or (at your option) any
+later version.
 
-  This program is distributed in the hope that it will be useful, but
-  WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
-  Public License for more details.
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+Public License for more details.
 
-  You should have received a copy of the GNU General Public License along
-  with this program; if not, see <http://www.gnu.org/licenses/>.
-
-:Manual section: 1
+You should have received a copy of the GNU General Public License along
+with this program; if not, see <http://www.gnu.org/licenses/>.

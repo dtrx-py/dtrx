@@ -17,6 +17,17 @@ DOCKER_IMAGE_NAME=${DOCKER_IMAGE_NAME:-$(basename -s .git "$(git remote --verbos
 # build the docker image
 DOCKER_BUILDKIT=1 docker build -t "$DOCKER_IMAGE_NAME" --build-arg "UID=$(id -u)" -f Dockerfile .
 
-# execute tox in the docker container. don't run in parallel; conda has issues
-# when we do this (pkg cache operations are not atomic!)
-docker run -v "$(pwd)":/mnt/workspace -t "$DOCKER_IMAGE_NAME" bash -c "tox $TOX_ARGS"
+# by default, run tox
+RUN_JOB=${RUN_JOB:-tox}
+
+case $RUN_JOB in
+    tox)
+        # execute tox in the docker container. don't run in parallel; conda has
+        # issues when we do this (pkg cache operations are not atomic!)
+        docker run -v "$(pwd)":/mnt/workspace -t "$DOCKER_IMAGE_NAME" bash -c "tox $TOX_ARGS"
+    ;;
+    rst2man)
+        # build man page from README
+        docker run -v "$(pwd)":/mnt/workspace -t "$DOCKER_IMAGE_NAME" bash gen-manpage.sh README dtrx.1
+    ;;
+esac

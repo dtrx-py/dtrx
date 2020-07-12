@@ -5,3 +5,4 @@ build
 /.eggs/
 /*.egg-info/
 /dist/
+/dtrx.1
