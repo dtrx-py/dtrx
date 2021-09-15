@@ -120,13 +120,14 @@ class ExtractorTest(object):
     def get_results(self, command, stdin=None):
         print("Output from %s:" % (" ".join(command),), file=self.outbuffer)
         self.outbuffer.flush()
-        status = self.start_proc(command, stdin, self.outbuffer).wait()
+        # on python3+, we can just use .wait(5). python2.7 doesn't have that.
+        # instead use the timeout utility to kill the process if it hangs
+        status = self.start_proc(["timeout", "5",] + command, stdin, self.outbuffer).wait()
         process = subprocess.Popen(["find"], stdout=subprocess.PIPE)
         output = process.stdout.read(-1).decode("ascii", errors="ignore")
         process.stdout.close()
         process.wait()
         return status, set(output.split("\n"))
-
     def run_script(self, key):
         commands = getattr(self, key)
         if commands is not None:

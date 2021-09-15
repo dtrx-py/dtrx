@@ -829,3 +829,11 @@
   filenames: test-text.zst
   baseline: |
     zstd -d $1 -o test-text
+
+- name: cpio false extension match recursive extract
+  filenames: test-cpio.tar.gz
+  options: "-rn"
+  baseline: |
+    mkdir test-cpio
+    cd test-cpio
+    tar -zxf ../$1
