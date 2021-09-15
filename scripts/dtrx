@@ -1345,10 +1345,12 @@ class ExtractorBuilder(object):
     try_by_magic = classmethod(try_by_magic)
 
     def try_by_extension(cls, filename):
-        parts = filename.split(".")[-2:]
+        parts = filename.split('.')[-2:]
         results = []
+        if len(parts) == 1:
+            return results
         while parts:
-            results.extend(cls.extension_map.get(".".join(parts), []))
+            results.extend(cls.extension_map.get('.'.join(parts), []))
             del parts[0]
         return results
 
