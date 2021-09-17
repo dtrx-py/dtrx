@@ -223,6 +223,7 @@ class BaseExtractor(object):
             raise ValueError("unrecognized encoding %s" % (encoding,))
         self.filename = os.path.realpath(filename)
         self.encoding = encoding
+        self.ignore_pw = False
         self.file_count = 0
         self.included_archives = []
         self.target = None
@@ -267,6 +268,17 @@ class BaseExtractor(object):
             except subprocess.TimeoutExpired:
                 logging.debug("timeout hit..")
                 self.timeout_check(pipe)
+                # Verify that we're not trying to extract password-protected
+                # archives in non-interactive mode
+                if self.pw_prompted and self.ignore_pw:
+                    pipe.kill()
+                    # Whatever extractor we're using probably left the
+                    # terminal hiding output..
+                    os.system("stty echo")
+                    # Clean up the error output
+                    self.stderr = ""
+                    raise ExtractorError("cannot extract encrypted archive '%s' in non-interactive mode"
+                        % (self.filename))
 
     def run_pipes(self, final_stdout=None):
         has_output_target = True if final_stdout else False
@@ -385,7 +397,8 @@ class BaseExtractor(object):
         self.pipe(self.extract_pipe)
         self.run_pipes()
 
-    def extract(self):
+    def extract(self, ignore_passwd = False):
+        self.ignore_pw = ignore_passwd
         try:
             self.target = tempfile.mkdtemp(prefix=".dtrx-", dir=".")
         except (OSError, IOError) as error:
@@ -451,7 +464,8 @@ class CompressionExtractor(BaseExtractor):
             raise ExtractorError("doesn't look like a compressed file")
         yield self.basename()
 
-    def extract(self):
+    def extract(self, ignore_passwd = False):
+        self.ignore_pw = ignore_passwd
         self.content_type = ONE_ENTRY_KNOWN
         self.content_name = self.basename()
         self.contents = None
@@ -1427,7 +1441,7 @@ class ExtractionAction(BaseAction):
     def run(self, filename, extractor):
         self.current_filename = filename
         error = (
-            self.report(extractor.extract)
+            self.report(extractor.extract, self.options.batch)
             or self.report(self.get_handler, extractor)
             or self.report(self.current_handler.handle)
             or self.report(self.show_extraction, extractor)
