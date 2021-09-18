@@ -23,7 +23,12 @@ import fcntl
 import os
 import re
 import struct
-import subprocess
+
+try:
+    import subprocess32 as subprocess
+except ImportError:
+    import subprocess
+
 import sys
 import tempfile
 import termios
@@ -120,14 +125,13 @@ class ExtractorTest(object):
     def get_results(self, command, stdin=None):
         print("Output from %s:" % (" ".join(command),), file=self.outbuffer)
         self.outbuffer.flush()
-        # on python3+, we can just use .wait(5). python2.7 doesn't have that.
-        # instead use the timeout utility to kill the process if it hangs
-        status = self.start_proc(["timeout", "5",] + command, stdin, self.outbuffer).wait()
+        status = self.start_proc(command, stdin, self.outbuffer).wait(5)
         process = subprocess.Popen(["find"], stdout=subprocess.PIPE)
         output = process.stdout.read(-1).decode("ascii", errors="ignore")
         process.stdout.close()
         process.wait()
         return status, set(output.split("\n"))
+
     def run_script(self, key):
         commands = getattr(self, key)
         if commands is not None:
@@ -297,7 +301,7 @@ class TestsRunner(object):
     def wanted_test(self, data):
         if not self.name_regexps:
             return True
-        return filter(None, [r.search(data["name"]) for r in self.name_regexps])
+        return any([r.search(data["name"]) for r in self.name_regexps])
 
     def add_subdir_tests(self):
         for odata in self.test_data:
