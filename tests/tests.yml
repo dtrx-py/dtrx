@@ -837,3 +837,19 @@
     mkdir test-cpio
     cd test-cpio
     tar -zxf ../$1
+
+# this has issues because zip uses a pty to read the password without echo;
+# see https://pexpect.readthedocs.io/en/latest/FAQ.html#whynotpipe
+# disabled for now
+# - name: password zip interactive
+#   filenames: test-pw.zip
+#   input: yolo
+#   baseline: |
+#     mkdir test-pw
+#     cd test-pw
+#     unzip -P yolo -q ../$1
+
+- name: password zip noninteractive
+  filenames: test-pw.zip
+  options: "-n"
+  error: true
