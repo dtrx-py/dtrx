@@ -853,3 +853,5 @@
   filenames: test-pw.zip
   options: "-n"
   error: true
+  grep: "cannot extract encrypted archive"
+  cleanup: stty -F /dev/stdout echo
