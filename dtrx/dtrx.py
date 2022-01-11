@@ -58,7 +58,6 @@ if sys.version_info[0] >= 3:
     def cmp(a, b):
         return (a > b) - (a < b)
 
-
 else:
     get_input = raw_input
 
@@ -277,8 +276,10 @@ class BaseExtractor(object):
                     os.system("stty echo")
                     # Clean up the error output
                     self.stderr = ""
-                    raise ExtractorError("cannot extract encrypted archive '%s' in non-interactive mode"
-                        % (self.filename))
+                    raise ExtractorError(
+                        "cannot extract encrypted archive '%s' in non-interactive mode"
+                        % (self.filename)
+                    )
 
     def run_pipes(self, final_stdout=None):
         has_output_target = True if final_stdout else False
@@ -397,7 +398,7 @@ class BaseExtractor(object):
         self.pipe(self.extract_pipe)
         self.run_pipes()
 
-    def extract(self, ignore_passwd = False):
+    def extract(self, ignore_passwd=False):
         self.ignore_pw = ignore_passwd
         try:
             self.target = tempfile.mkdtemp(prefix=".dtrx-", dir=".")
@@ -464,7 +465,7 @@ class CompressionExtractor(BaseExtractor):
             raise ExtractorError("doesn't look like a compressed file")
         yield self.basename()
 
-    def extract(self, ignore_passwd = False):
+    def extract(self, ignore_passwd=False):
         self.ignore_pw = ignore_passwd
         self.content_type = ONE_ENTRY_KNOWN
         self.content_name = self.basename()
@@ -1359,12 +1360,12 @@ class ExtractorBuilder(object):
     try_by_magic = classmethod(try_by_magic)
 
     def try_by_extension(cls, filename):
-        parts = filename.split('.')[-2:]
+        parts = filename.split(".")[-2:]
         results = []
         if len(parts) == 1:
             return results
         while parts:
-            results.extend(cls.extension_map.get('.'.join(parts), []))
+            results.extend(cls.extension_map.get(".".join(parts), []))
             del parts[0]
         return results
 
@@ -1716,6 +1717,10 @@ class ExtractorApplication(object):
         return 0
 
 
-if __name__ == "__main__":
+def main():
     app = ExtractorApplication(sys.argv[1:])
     sys.exit(app.run())
+
+
+if __name__ == "__main__":
+    main()

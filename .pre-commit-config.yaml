@@ -2,7 +2,7 @@
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.4.0
+    rev: v4.1.0
     hooks:
     -   id: check-added-large-files  # Prevent giant files from being committed
     -   id: check-case-conflict  # Check for files that would conflict in case-insensitive filesystems
@@ -13,10 +13,10 @@ repos:
     -   id: pretty-format-json  # This hook sets a standard for formatting JSON files.
     -   id: trailing-whitespace  # This hook trims trailing whitespace.
 -   repo: https://github.com/psf/black
-    rev: 21.7b0
+    rev: 21.12b0
     hooks:
     -   id: black
 -   repo: https://github.com/PyCQA/isort
-    rev: 5.9.3
+    rev: 5.10.1
     hooks:
     -   id: isort
