@@ -10,7 +10,25 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
+
+    steps:
+      # checkout v2, with recursive submodule update
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - name: 🛠️ Build
+        run: |
+          pip install build==0.7.0
+          python -m build
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: release-packages
+          path: dist/
+  test:
+    runs-on: ubuntu-20.04
 
     strategy:
       matrix:
@@ -23,17 +41,11 @@ jobs:
           submodules: recursive
 
       # build the Docker image we use to run the tests
-      - name: test.sh
+      - name: 🧪 Run Tox Tests
         run: TOX_ARGS='-e ${{ matrix.python }}' ./test.sh
 
-      # upload-artifact to save the output wheels
-      - uses: actions/upload-artifact@v1
-        with:
-          name: ${{ matrix.python }}-wheel-output
-          path: .tox/${{ matrix.python }}/dist/
-
   manpage:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     steps:
       # checkout v2, with recursive submodule update
@@ -42,7 +54,7 @@ jobs:
           submodules: recursive
 
       # build the Docker image we use to run the tests
-      - name: test.sh
+      - name: 📝 Generate Man Pages
         run: RUN_JOB=rst2man ./test.sh
 
       # upload-artifact to save the output wheels

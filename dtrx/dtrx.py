@@ -1716,6 +1716,9 @@ class ExtractorApplication(object):
         return 0
 
 
-if __name__ == "__main__":
+def main():
     app = ExtractorApplication(sys.argv[1:])
     sys.exit(app.run())
+
+if __name__ == "__main__":
+    main()

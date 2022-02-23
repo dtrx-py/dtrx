@@ -7,6 +7,10 @@ pyversions](https://img.shields.io/pypi/pyversions/dtrx.svg?style=for-the-badge&
 
 - [dtrx](#dtrx)
   - [Changes in this repo](#changes-in-this-repo)
+  - [Development](#development)
+    - [Contributions](#contributions)
+    - [Issues](#issues)
+    - [Releases](#releases)
 
 # dtrx
 
@@ -41,4 +45,47 @@ tests by running (requires Docker installed):
 
 ```bash
 ./test.sh
+```
+
+## Development
+
+### Contributions
+
+Contributions are gladly welcomed! Feel free to open a Pull Request with any
+changes.
+
+### Issues
+
+When posting an issue, it can be very handy to provide any example files (for
+example, the archive that failed to extract) or reproduction steps so we can
+address the problem quickly.
+
+### Releases
+
+Releases are tagged in this repo and published to pypi.org. The release process
+is the following (unfortunately manual) steps:
+
+```bash
+# update the VERSION value in dtrx/dtrx.py, then:
+❯ git add dtrx/dtrx.py
+❯ git commit  # fill in the commit message
+
+# create an annotated tag for the release. usually good to put a list of new
+# commits since the previous tag, for example by listing them with:
+# ❯ git log $(git describe --tags --abbrev=0)..HEAD --oneline
+❯ git tag -a <version number>
+
+# build the release archives (requires the 'build' package, `pip install build`)
+❯ python -m build
+
+# confirm the correct build artifacts were generated
+❯ ls dist
+dtrx-8.2.2-py2.py3-none-any.whl  dtrx-8.2.2.tar.gz
+
+# upload to pypi.org (requires a user account on the dtrx project)
+❯ twine upload dist/*
+
+# optional, but nice to do, create a GitHub Release for the tag. requires
+# permissions on the dtrx GitHub repo
+❯ gh release create --generate-notes <tag>
 ```

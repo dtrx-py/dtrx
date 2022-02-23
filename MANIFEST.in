@@ -1,3 +1,0 @@
-include COPYING INSTALL README NEWS
-recursive-include tests *
-exclude tests/testscript.sh

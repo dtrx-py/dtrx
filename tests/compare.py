@@ -40,15 +40,15 @@ try:
 except NameError:
     from sets import Set as set
 
-if os.path.exists("scripts/dtrx") and os.path.exists("tests"):
+if os.path.exists("dtrx/dtrx.py") and os.path.exists("tests"):
     os.chdir("tests")
-elif os.path.exists("../scripts/dtrx") and os.path.exists("../tests"):
+elif os.path.exists("../dtrx/dtrx.py") and os.path.exists("../tests"):
     pass
 else:
     print("ERROR: Can't run tests in this directory!")
     sys.exit(2)
 
-DTRX_SCRIPT = os.path.realpath("../scripts/dtrx")
+DTRX_SCRIPT = os.path.realpath("../dtrx/dtrx.py")
 SHELL_CMD = ["sh", "-se"]
 ROOT_DIR = os.path.realpath(os.curdir)
 NUM_TESTS = 0

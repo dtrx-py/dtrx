@@ -29,6 +29,6 @@ case $RUN_JOB in
     ;;
     rst2man)
         # build man page from README
-        docker run --rm -v "$(pwd)":/mnt/workspace -t "$DOCKER_IMAGE_NAME" bash gen-manpage.sh README dtrx.1
+        docker run --rm -v "$(pwd)":/mnt/workspace -t "$DOCKER_IMAGE_NAME" bash tools/gen-manpage.sh archived/README dtrx.1
     ;;
 esac
