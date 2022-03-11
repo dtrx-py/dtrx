@@ -1340,9 +1340,15 @@ class ExtractorBuilder(object):
     magic_map_matches = classmethod(magic_map_matches)
 
     def try_by_magic(cls, filename):
-        process = subprocess.Popen(["file", "-zL", filename], stdout=subprocess.PIPE)
-        status = process.wait()
-        if status != 0:
+        try:
+            process = subprocess.Popen(
+                ["file", "-zL", filename], stdout=subprocess.PIPE
+            )
+            status = process.wait()
+            if status != 0:
+                return []
+        except FileNotFoundError:
+            logger.error("'file' command not found, skipping magic test")
             return []
         output = process.stdout.readline().decode("ascii")
         process.stdout.close()

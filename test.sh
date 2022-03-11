@@ -26,6 +26,8 @@ case $RUN_JOB in
         # script writes files to an in-tree location, so run serially to avoid
         # clobbering during the tests
         docker run --rm -v "$(pwd)":/mnt/workspace -t "$DOCKER_IMAGE_NAME" bash -c "tox $TOX_ARGS"
+
+        ./tools/test-nonexistent-file-cmd.sh
     ;;
     rst2man)
         # build man page from README
