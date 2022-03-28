@@ -214,6 +214,7 @@ class BaseExtractor(object):
         "lrzip": ["lrzcat", "-q"],
         "lrz": ["lrzcat", "-q"],
         "zstd": ["zstd", "-d"],
+        "br": ["br", "--decompress"],
     }
     name_checker = DirectoryChecker
 
@@ -613,7 +614,16 @@ class NoPipeExtractor(BaseExtractor):
         self.user_stdin = True
 
     def extract_archive(self):
-        self.extract_pipe = self.extract_command + [self.filename]
+        # the commands provided by the child class have optional format codes
+        # that will be replaced here
+        extract_fmt_args = {
+            "OUTPUT_FILE": os.path.splitext(os.path.basename(self.filename))[0],
+        }
+        formatted_extract_commands = [
+            x.format(**extract_fmt_args) for x in self.extract_command
+        ]
+
+        self.extract_pipe = formatted_extract_commands + [self.filename]
         BaseExtractor.extract_archive(self)
 
     def get_filenames(self):
@@ -720,6 +730,17 @@ class ZstandardExtractor(NoPipeExtractor):
             elif fn_index is not None:
                 yield line[fn_index:]
         self.archive.close()
+
+
+class BrotliExtractor(NoPipeExtractor):
+    file_type = "brotli file"
+    extract_command = ["brotli", "--decompress", "--output={OUTPUT_FILE}"]
+    # brotli command line doesn't support this mode
+    list_command = ["false"]
+
+    def get_filenames(self):
+        # just raise an error, this is not supported
+        raise ExtractorError
 
 
 class CABExtractor(NoPipeExtractor):
@@ -1232,6 +1253,10 @@ class ExtractorBuilder(object):
                 "zstd",
             ),
             "magic": ("Zstandard compressed data",),
+        },
+        "brotli": {
+            "extractors": (BrotliExtractor,),
+            "extensions": ("br",),
         },
         "compress": {"extractors": (CompressionExtractor,)},
     }

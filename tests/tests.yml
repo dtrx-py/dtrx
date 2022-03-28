@@ -855,3 +855,8 @@
   error: true
   grep: "cannot extract encrypted archive"
   cleanup: stty -F /dev/stdout echo
+
+- name: brotli
+  filenames: test-text.br
+  baseline: |
+    brotli --decompress $1 --output=test-text

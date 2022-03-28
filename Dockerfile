@@ -5,6 +5,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
     arj \
     binutils \
+    brotli \
     cpio \
     file \
     gzip \
@@ -26,13 +27,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     software-properties-common && \
     add-apt-repository ppa:deadsnakes/ppa && apt-get update && \
     bash -c "\
-        apt-get install -y \
-            python2.7{,-dev} \
-            python3.6{,-dev} \
-            python3.7{,-dev,-distutils} \
-            python3.8{,-dev} \
-            python3.9{,-dev,-distutils}\
-            python3-distutils" \
+    apt-get install -y \
+    python2.7{,-dev} \
+    python3.6{,-dev} \
+    python3.7{,-dev,-distutils} \
+    python3.8{,-dev} \
+    python3.9{,-dev,-distutils}\
+    python3-distutils" \
     && rm -rf /var/lib/apt/lists/*
 
 # create a user inside the container. if you specify your UID when building the
