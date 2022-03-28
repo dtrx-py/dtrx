@@ -2,9 +2,11 @@ FROM ubuntu:focal-20200319
 
 ARG DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     arj \
+    binutils \
     cpio \
+    file \
     gzip \
     lhasa \
     libffi-dev \
@@ -16,13 +18,12 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     python3.8 \
     unrar \
+    unzip \
     wget \
+    xz-utils \
     zip \
-    zstd
-
-# Install the python versions
-RUN \
-    apt-get install -y software-properties-common && \
+    zstd \
+    software-properties-common && \
     add-apt-repository ppa:deadsnakes/ppa && apt-get update && \
     bash -c "\
         apt-get install -y \
@@ -31,7 +32,8 @@ RUN \
             python3.7{,-dev,-distutils} \
             python3.8{,-dev} \
             python3.9{,-dev,-distutils}\
-            python3-distutils"
+            python3-distutils" \
+    && rm -rf /var/lib/apt/lists/*
 
 # create a user inside the container. if you specify your UID when building the
 # image, you can mount directories into the container with read-write access:
@@ -39,13 +41,13 @@ RUN \
 ARG UID=1010
 ARG UNAME=builder
 RUN useradd --uid ${UID} --create-home --user-group ${UNAME} && \
-    echo "${UNAME}:${UNAME}" | chpasswd && adduser ${UNAME} sudo
+    echo "${UNAME}:${UNAME}" | chpasswd
 
 ENV PATH=${PATH}:/home/${UNAME}/.local/bin
 
 USER ${UNAME}
 
 # Need tox to run the tests, docutils for rst2man.py
-RUN pip3 install tox==3.15.2 docutils==0.16
+RUN pip3 install tox==3.15.2 docutils==0.16 pyyaml==5.4.1
 
-WORKDIR /mnt/workspace
+WORKDIR /workspace

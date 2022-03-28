@@ -91,9 +91,9 @@ class ExtractorTest(object):
         global NUM_TESTS
         NUM_TESTS += 1
         self.test_num = NUM_TESTS
-        setattr(self, "name", kwargs["name"])
-        setattr(self, "options", kwargs.get("options", "-n").split())
-        setattr(self, "filenames", kwargs.get("filenames", "").split())
+        self.name = kwargs["name"]
+        self.options = kwargs.get("options", "-n").split()
+        self.filenames = kwargs.get("filenames", "").split()
         for key in (
             "directory",
             "prerun",
@@ -147,8 +147,10 @@ class ExtractorTest(object):
 
     def get_extractor_results(self):
         self.run_script("prerun")
+        # run with the current python interpreter, rather than relying on the
+        # hashbang.
         return self.get_results(
-            [DTRX_SCRIPT] + self.options + self.filenames, self.input
+            [sys.executable, DTRX_SCRIPT] + self.options + self.filenames, self.input
         )
 
     def get_posttest_result(self):

@@ -5,17 +5,22 @@ version](https://img.shields.io/pypi/v/dtrx.svg?style=for-the-badge&logo=PyPi&lo
 pyversions](https://img.shields.io/pypi/pyversions/dtrx.svg?style=for-the-badge&logo=python&logoColor=white&color=ff69b4)](https://pypi.python.org/pypi/dtrx/)
 [![GitHub Workflow Status](https://img.shields.io/github/workflow/status/dtrx-py/dtrx/main-ci/master?logo=github-actions&logoColor=white&style=for-the-badge)](https://github.com/dtrx-py/dtrx/actions)
 
-- [dtrx](#dtrx)
-  - [Changes in this repo](#changes-in-this-repo)
-  - [Development](#development)
-    - [Contributions](#contributions)
-    - [Issues](#issues)
-    - [Releases](#releases)
+<!-- toc -->
+
+- [Changes in this repo](#changes-in-this-repo)
+- [Development](#development)
+  - [Contributions](#contributions)
+  - [Issues](#issues)
+  - [Releases](#releases)
+  - [Tests](#tests)
+  - [Linting](#linting)
+
+<!-- tocstop -->
 
 # dtrx
 
-"**Do The Right eXtraction**" - don't remember what set of `tar` flags or where to
-pipe the output to extract it? no worries!
+"**Do The Right eXtraction**" - don't remember what set of `tar` flags or where
+to pipe the output to extract it? no worries!
 
 TL;DR
 
@@ -89,3 +94,35 @@ dtrx-8.2.2-py2.py3-none-any.whl  dtrx-8.2.2.tar.gz
 # permissions on the dtrx GitHub repo
 ❯ gh release create --generate-notes <tag>
 ```
+
+### Tests
+
+There is a suite of tests that can be run either on the local python
+environment, or across all the supported python environments via docker:
+
+```bash
+# run the suite from the current python environment
+pip install pyyaml  # test dependency
+python tests/compare.py
+
+# run the tests in docker across all supported python versions (takes a while)
+./test.sh
+
+# run the tests in docker on one python version
+RUN_JOB=quick-test ./test.sh
+```
+
+### Linting
+
+Linting is provided by [pre-commit](pre-commit.com). To use it, first install
+the pre-commit hook:
+
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+pre-commit will run anytime `git commit` runs (disable with `--no-verify`). You
+can manually run it with `pre-commit run`.
+
+It's also run in CI.

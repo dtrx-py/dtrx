@@ -5,8 +5,8 @@ set -e
 # rst2man.py doesn't return non-zero on warnings or errors 🤦
 # instead, if it outputs anything on stdout or stderr, assume it's some abnormal
 # result and error
-output="$(rst2man.py $1 $2  2>&1)"
+output="$(rst2man.py "$1" "$2"  2>&1)"
 
 if [ -n "$output" ]; then
-    echo $output && false;
+    echo "$output" && false;
 fi

@@ -269,7 +269,7 @@
   filenames: tests.yml
   options: -n -qq
   error: true
-  antigrep: '.'
+  antigrep: "."
 
 - name: can't write to directory
   directory: inside-dir
@@ -612,7 +612,7 @@
   filenames: trickery.tar.gz
   prerun: cp ${1}test-1.23.zip ${1}trickery.tar.gz
   cleanup: rm -f ${1}trickery.tar.gz
-  antigrep: '.'
+  antigrep: "."
   baseline: |
     mkdir trickery
     cd trickery
@@ -781,7 +781,7 @@
   filenames: test-empty.tar.bz2
   options: ""
   baseline: ""
-  antigrep: '.'
+  antigrep: "."
 
 - name: listing empty archive
   filenames: test-empty.tar.bz2
@@ -804,7 +804,7 @@
     mkdir test-recursive-no-prompt
     cd test-recursive-no-prompt
     tar -jxf ../$1
-  antigrep: '.'
+  antigrep: "."
 
 - name: uncompressed dmg
   filenames: test.dmg

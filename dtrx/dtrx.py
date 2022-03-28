@@ -58,9 +58,8 @@ if sys.version_info[0] >= 3:
     def cmp(a, b):
         return (a > b) - (a < b)
 
-
 else:
-    get_input = raw_input
+    get_input = raw_input  # noqa: F821
 
 try:
     set
@@ -277,8 +276,10 @@ class BaseExtractor(object):
                     os.system("stty echo")
                     # Clean up the error output
                     self.stderr = ""
-                    raise ExtractorError("cannot extract encrypted archive '%s' in non-interactive mode"
-                        % (self.filename))
+                    raise ExtractorError(
+                        "cannot extract encrypted archive '%s' in non-interactive mode"
+                        % (self.filename)
+                    )
 
     def run_pipes(self, final_stdout=None):
         has_output_target = True if final_stdout else False
@@ -318,7 +319,7 @@ class BaseExtractor(object):
         else:
             self.included_root = self.content_name
         start_index = len(self.included_root)
-        for path, dirname, filenames in os.walk(self.included_root):
+        for path, _dirname, filenames in os.walk(self.included_root):
             self.file_count += len(filenames)
             path = path[start_index:]
             for filename in filenames:
@@ -397,7 +398,7 @@ class BaseExtractor(object):
         self.pipe(self.extract_pipe)
         self.run_pipes()
 
-    def extract(self, ignore_passwd = False):
+    def extract(self, ignore_passwd=False):
         self.ignore_pw = ignore_passwd
         try:
             self.target = tempfile.mkdtemp(prefix=".dtrx-", dir=".")
@@ -464,7 +465,7 @@ class CompressionExtractor(BaseExtractor):
             raise ExtractorError("doesn't look like a compressed file")
         yield self.basename()
 
-    def extract(self, ignore_passwd = False):
+    def extract(self, ignore_passwd=False):
         self.ignore_pw = ignore_passwd
         self.content_type = ONE_ENTRY_KNOWN
         self.content_name = self.basename()
@@ -871,16 +872,15 @@ class BaseHandler(object):
 
 
 class FlatHandler(BaseHandler):
+    @staticmethod
     def can_handle(contents, options):
         return (options.flat and (contents != ONE_ENTRY_KNOWN)) or (
             options.overwrite and (contents == MATCHING_DIRECTORY)
         )
 
-    can_handle = staticmethod(can_handle)
-
     def organize(self):
         self.target = "."
-        for curdir, dirs, filenames in os.walk(self.extractor.target, topdown=False):
+        for curdir, _dirs, filenames in os.walk(self.extractor.target, topdown=False):
             path_parts = curdir.split(os.sep)
             if path_parts[0] == ".":
                 del path_parts[1]
@@ -897,12 +897,11 @@ class FlatHandler(BaseHandler):
 
 
 class OverwriteHandler(BaseHandler):
+    @staticmethod
     def can_handle(contents, options):
         return (options.flat and (contents == ONE_ENTRY_KNOWN)) or (
             options.overwrite and (contents != MATCHING_DIRECTORY)
         )
-
-    can_handle = staticmethod(can_handle)
 
     def organize(self):
         self.target = self.extractor.basename()
@@ -912,12 +911,11 @@ class OverwriteHandler(BaseHandler):
 
 
 class MatchHandler(BaseHandler):
+    @staticmethod
     def can_handle(contents, options):
         return (contents == MATCHING_DIRECTORY) or (
             (contents in ONE_ENTRY_UNKNOWN) and options.one_entry_policy.ok_for_match()
         )
-
-    can_handle = staticmethod(can_handle)
 
     def organize(self):
         source = os.path.join(
@@ -943,10 +941,9 @@ class MatchHandler(BaseHandler):
 class EmptyHandler(object):
     target = ""
 
+    @staticmethod
     def can_handle(contents, options):
         return contents == EMPTY
-
-    can_handle = staticmethod(can_handle)
 
     def __init__(self, extractor, options):
         os.rmdir(extractor.target)
@@ -956,10 +953,9 @@ class EmptyHandler(object):
 
 
 class BombHandler(BaseHandler):
+    @staticmethod
     def can_handle(contents, options):
         return True
-
-    can_handle = staticmethod(can_handle)
 
     def organize(self):
         basename = self.extractor.basename()
@@ -1323,10 +1319,10 @@ class ExtractorBuilder(object):
                 for extractor in self.build_extractor(*ext_args):
                     yield extractor
 
-    def try_by_mimetype(cls, filename):
+    def try_by_mimetype(self, filename):
         mimetype, encoding = mimetypes.guess_type(filename)
         try:
-            return [(cls.mimetype_map[mimetype], encoding)]
+            return [(self.mimetype_map[mimetype], encoding)]
         except KeyError:
             if encoding:
                 return [("compress", encoding)]
@@ -1334,12 +1330,12 @@ class ExtractorBuilder(object):
 
     try_by_mimetype = classmethod(try_by_mimetype)
 
-    def magic_map_matches(cls, output, magic_map):
+    def magic_map_matches(self, output, magic_map):
         return [result for regexp, result in magic_map.items() if regexp.search(output)]
 
     magic_map_matches = classmethod(magic_map_matches)
 
-    def try_by_magic(cls, filename):
+    def try_by_magic(self, filename):
         try:
             process = subprocess.Popen(
                 ["file", "-zL", filename], stdout=subprocess.PIPE
@@ -1354,8 +1350,8 @@ class ExtractorBuilder(object):
         process.stdout.close()
         if output.startswith("%s: " % filename):
             output = output[len(filename) + 2 :]
-        mimes = cls.magic_map_matches(output, cls.magic_mime_map)
-        encodings = cls.magic_map_matches(output, cls.magic_encoding_map)
+        mimes = self.magic_map_matches(output, self.magic_mime_map)
+        encodings = self.magic_map_matches(output, self.magic_encoding_map)
         if mimes and not encodings:
             encodings = [None]
         elif encodings and not mimes:
@@ -1364,13 +1360,13 @@ class ExtractorBuilder(object):
 
     try_by_magic = classmethod(try_by_magic)
 
-    def try_by_extension(cls, filename):
-        parts = filename.split('.')[-2:]
+    def try_by_extension(self, filename):
+        parts = filename.split(".")[-2:]
         results = []
         if len(parts) == 1:
             return results
         while parts:
-            results.extend(cls.extension_map.get('.'.join(parts), []))
+            results.extend(self.extension_map.get(".".join(parts), []))
             del parts[0]
         return results
 
@@ -1711,7 +1707,7 @@ class ExtractorApplication(object):
                         filename, builder.get_extractor()
                     )
                 if error:
-                    if error != True:
+                    if error is not True:
                         logger.error("%s: %s" % (filename, error))
                     self.failures.append(filename)
                 else:
@@ -1725,6 +1721,7 @@ class ExtractorApplication(object):
 def main():
     app = ExtractorApplication(sys.argv[1:])
     sys.exit(app.run())
+
 
 if __name__ == "__main__":
     main()
