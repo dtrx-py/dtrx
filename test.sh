@@ -27,7 +27,6 @@ case $RUN_JOB in
         docker run --rm -v "$(pwd)":/workspace -t "$DOCKER_IMAGE_NAME" bash -c "tox $TOX_ARGS"
 
         ./tools/test-nonexistent-file-cmd.sh
-        docker run --rm -v "$(pwd)":/workspace -t "$DOCKER_IMAGE_NAME" bash -c "tox $TOX_ARGS"
     ;;
     quick-test)
         # single quick test

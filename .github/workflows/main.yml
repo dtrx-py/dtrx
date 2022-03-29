@@ -32,7 +32,7 @@ jobs:
 
     strategy:
       matrix:
-        python: [py27, py36, py37, py38, py39]
+        python: [py27, py36, py37, py38, py39, py3.10]
 
     steps:
       # checkout v2, with recursive submodule update

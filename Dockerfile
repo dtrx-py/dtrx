@@ -33,6 +33,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3.7{,-dev,-distutils} \
     python3.8{,-dev} \
     python3.9{,-dev,-distutils}\
+    python3.10{,-dev,-distutils}\
     python3-distutils" \
     && rm -rf /var/lib/apt/lists/*
 
