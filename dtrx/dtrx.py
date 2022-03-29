@@ -25,6 +25,7 @@ from __future__ import absolute_import, print_function
 
 import errno
 import fcntl
+import itertools
 import logging
 import mimetypes
 import optparse
@@ -1537,6 +1538,37 @@ class ExtractorApplication(object):
                 self.clean_destination(os.path.join(directory, basename))
         sys.exit(1)
 
+    @staticmethod
+    def get_supported_extensions():
+        """
+        return supported extensions
+        """
+        # get the lists of built-in extensions and combine them
+        ext_map_base = set(ExtractorBuilder.extension_map.keys())
+        ext_map = set(
+            itertools.chain(
+                *[
+                    x["extensions"]
+                    for x in ExtractorBuilder.extractor_map.values()
+                    if "extensions" in x
+                ]
+            )
+        )
+        ext_map = ext_map_base.union(ext_map)
+
+        # get the list of extensions supplied by mimetypes
+        mimetypes_encodings_map = set([x.lstrip(".") for x in mimetypes.encodings_map])
+        # dtrx only supports a subset of the total types_map set, filter it
+        mimetypes_exts = filter(
+            lambda x: mimetypes.types_map[x] in ExtractorBuilder.mimetype_map,
+            mimetypes.types_map,
+        )
+        mimetypes_exts = set([x.lstrip(".") for x in mimetypes_exts])
+        mimetypes_exts = mimetypes_encodings_map.union(mimetypes_exts)
+
+        # sort the output for consistent order
+        return sorted(ext_map.union(mimetypes_exts))
+
     def parse_options(self, arguments):
         parser = optparse.OptionParser(
             usage="%prog [options] archive [archive2 ...]",
@@ -1603,6 +1635,24 @@ class ExtractorApplication(object):
             action="store_true",
             default=False,
             help="extract everything to the current directory",
+        )
+
+        def list_extensions(option, opt, value, parser, *args, **kwargs):
+            """callback for optparse to list supported extensions"""
+            print("\n".join(ExtractorApplication.get_supported_extensions()))
+            sys.exit()
+
+        parser.add_option(
+            "--list-extensions",
+            action="callback",
+            callback=list_extensions,
+            help=(
+                "list supported filetypes by extension. note that these are the"
+                " filetypes recognized by dtrx, but extraction still relies on the"
+                " appropriate tool to be installed. also note that this is not a"
+                " comprehensive list; dtrx will fall back on the 'file' command if the"
+                " extension is unknown"
+            ),
         )
         parser.add_option(
             "-v",

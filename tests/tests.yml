@@ -860,3 +860,51 @@
   filenames: test-text.br
   baseline: |
     brotli --decompress $1 --output=test-text
+
+- name: list extensions
+  options: "--list-extensions"
+  # note: this pattern is directly passed to python's regex .search function
+  grep: |
+    7z
+    Z
+    arj
+    br
+    bz2
+    cab
+    cpio
+    deb
+    dmg
+    epub
+    gem
+    gz
+    hdr
+    jar
+    lha
+    lrz
+    lz
+    lzh
+    lzma
+    msi
+    rar
+    rpm
+    tar
+    tar.Z
+    tar.bz2
+    tar.gz
+    tar.lrz
+    tar.lz
+    tar.lzma
+    tar.xz
+    tar.zst
+    taz
+    tb2
+    tbz
+    tbz2
+    tgz
+    tlz
+    txz
+    xpi
+    xz
+    zip
+    zst
+    zstd
