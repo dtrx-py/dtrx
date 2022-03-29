@@ -1,10 +1,52 @@
 [build-system]
 requires = [
     # latest at time of writing
-    "setuptools >= 44.1.1",
+    "setuptools >= 61.0.0",
+    "trove-classifiers >= 2022.3.21",
     "wheel >= 0.37.0",
 ]
 build-backend = 'setuptools.build_meta'
+
+[project]
+name = "dtrx"
+dynamic = ["version", "readme"]
+description = "Script to intelligently extract multiple archive types"
+authors = [{ name = "Brett Smith", email = "brettcsmith@brettcsmith.org" }]
+license = { text = "GNU General Public License version 3 or later" }
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: End Users/Desktop",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: GNU General Public License (GPL)",
+    "Natural Language :: English",
+    "Operating System :: POSIX",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 2",
+    "Programming Language :: Python :: 2.7",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Topic :: Utilities",
+]
+dependencies = ["subprocess32;python_version < '3.3'"]
+scripts = { dtrx = "dtrx.dtrx:main" }
+
+[project.urls]
+homepage = "http://www.brettcsmith.org/2007/dtrx/"
+code = "https://github.com/dtrx-py/dtrx"
+
+[tool.setuptools]
+packages = ["dtrx"]
+bdist_wheel = {universal = true,py2 = true,py3 = true}
+
+[tool.setuptools.dynamic]
+version = { attr = "dtrx.dtrx.VERSION" }
+readme = { file = ["README.md"] }
 
 [tool.black]
 preview = true
