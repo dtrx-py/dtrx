@@ -915,3 +915,17 @@
     mkdir test
     cd test
     rpm2cpio ../$1 | cpio -i --make-directories --quiet --no-absolute-filenames
+
+- name: jar
+  filenames: test.jar
+  baseline: |
+    mkdir test
+    cd test
+    rpm2cpio ../$1 | cpio -i --make-directories --quiet --no-absolute-filenames
+
+- name: duplicate-overwrite
+  filenames: test-1.23.zip
+  baseline: |
+    mkdir test-1.23
+    cd test-1.23
+    unzip -q ../$1

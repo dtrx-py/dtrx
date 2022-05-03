@@ -218,6 +218,7 @@ class BaseExtractor(object):
         "br": ["br", "--decompress"],
     }
     name_checker = DirectoryChecker
+    noprompt_value = ""
 
     def __init__(self, filename, encoding):
         if encoding and (encoding not in self.decoders):
@@ -619,6 +620,9 @@ class NoPipeExtractor(BaseExtractor):
         # that will be replaced here
         extract_fmt_args = {
             "OUTPUT_FILE": os.path.splitext(os.path.basename(self.filename))[0],
+            # if we are in "batch" (--noninteractive) mode, the extractor might
+            # have extra fields that should be included
+            "NOPROMPT_FIELD": self.noprompt_value if self.ignore_pw else "",
         }
         formatted_extract_commands = [
             x.format(**extract_fmt_args) for x in self.extract_command
@@ -634,8 +638,9 @@ class NoPipeExtractor(BaseExtractor):
 
 class ZipExtractor(NoPipeExtractor):
     file_type = "Zip file"
-    extract_command = ["unzip", "-q"]
+    extract_command = ["unzip", "-q", "{NOPROMPT_FIELD}"]
     list_command = ["zipinfo", "-1"]
+    noprompt_value = "-o"
 
     def is_fatal_error(self, status):
         return (status or 0) > 1
@@ -685,9 +690,10 @@ class LZHExtractor(ZipExtractor):
 
 class SevenExtractor(NoPipeExtractor):
     file_type = "7z file"
-    extract_command = ["7z", "x"]
+    extract_command = ["7z", "x", "{NOPROMPT_FIELD}"]
     list_command = ["7z", "l"]
     border_re = re.compile("^[- ]+$")
+    noprompt_value = "-y"
 
     def get_filenames(self):
         fn_index = None
@@ -707,11 +713,18 @@ class SevenExtractor(NoPipeExtractor):
 
         self.stderr += "".join(errs)
 
-        # pass through the password prompt, if 7z sent one
-        if errs and "password" in errs[-1]:
-            sys.stdout.write("\n" + errs[-1])
-            sys.stdout.flush()
-            self.pw_prompted = True
+        # handle some common 7z interactive prompts
+        if errs:
+            # pass through the password prompt, if 7z sent one
+            if "password" in errs[-1]:
+                sys.stdout.write("\n" + errs[-1])
+                sys.stdout.flush()
+                self.pw_prompted = True
+            elif "replace the existing file" in self.stderr:
+                # junk archive with duplicate contents. just crash out.
+                raise RuntimeError(
+                    "Error, duplicate entries in archive:\n" + "".join(self.stderr)
+                )
 
 
 class ZstandardExtractor(NoPipeExtractor):
@@ -1617,7 +1630,11 @@ class ExtractorApplication(object):
             dest="batch",
             action="store_true",
             default=False,
-            help="don't ask how to handle special cases",
+            help=(
+                "don't ask how to handle special cases. note: this option can be"
+                " dangerous! it sets the extraction provider to overwrite duplicate"
+                " files without prompting"
+            ),
         )
         parser.add_option(
             "-o",
