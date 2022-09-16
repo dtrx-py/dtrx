@@ -1,0 +1,7 @@
+# Development requirements
+
+docutils==0.16
+invoke==1.7.1
+pyyaml==5.4.1
+tox==3.15.2
+tox-pyenv==1.1.0

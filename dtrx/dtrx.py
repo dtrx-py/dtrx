@@ -114,6 +114,8 @@ mimetypes.encodings_map.setdefault(".lzma", "lzma")
 mimetypes.encodings_map.setdefault(".xz", "xz")
 mimetypes.encodings_map.setdefault(".lz", "lzip")
 mimetypes.encodings_map.setdefault(".lrz", "lrzip")
+mimetypes.encodings_map.setdefault(".zst", "zstd")
+mimetypes.encodings_map.setdefault(".zstd", "zstd")
 mimetypes.types_map.setdefault(".gem", "application/x-ruby-gem")
 
 logger = logging.getLogger("dtrx-log")
@@ -212,14 +214,26 @@ class BaseExtractor(object):
         "lzma": ["lzcat"],
         "xz": ["xzcat"],
         "lzip": ["lzip", "-cd"],
-        "lrzip": ["lrzcat", "-q"],
-        "lrz": ["lrzcat", "-q"],
         "zstd": ["zstd", "-d"],
         "br": ["br", "--decompress"],
     }
     name_checker = DirectoryChecker
 
     def __init__(self, filename, encoding):
+        # bit of a hack, if we're doing lzip, need to set the correct quiet
+        # option based on what's supported, since this behavior changed
+        if encoding in ("lrzip", "lrz"):
+            # need to check if this version of lrzip supports the -Q option
+            output = subprocess.check_output(
+                "lrzip --help", stderr=subprocess.STDOUT, shell=True
+            )
+            if b"-Q" in output:
+                decoder = ["lrzcat", "-Q"]
+            else:
+                decoder = ["lrzcat", "-q"]
+            self.decoders["lrz"] = decoder
+            self.decoders["lrzip"] = decoder
+
         if encoding and (encoding not in self.decoders):
             raise ValueError("unrecognized encoding %s" % (encoding,))
         self.filename = os.path.realpath(filename)
@@ -1309,13 +1323,6 @@ class ExtractorBuilder(object):
     def __init__(self, filename, options):
         self.filename = filename
         self.options = options
-
-        # Hack, extend the python mimetypes list to support zstd too
-        for name in (
-            ".zst",
-            ".zstd",
-        ):
-            mimetypes.encodings_map[name] = "zstd"
 
     def build_extractor(self, archive_type, encoding):
         type_info = self.extractor_map[archive_type]

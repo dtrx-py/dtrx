@@ -35,7 +35,7 @@
 - name: basic .tar.lrz
   filenames: test-1.23.tar.lrz
   baseline: |
-    lrzcat $1 | tar -xf -
+    lrzcat -Q $1 | tar -xf -
 
 - name: basic .zip
   filenames: test-1.23.zip
@@ -171,7 +171,7 @@
   options: ""
   antigrep: "."
   baseline: |
-    lrzcat $1 >test-text
+    lrzcat -Q $1 >test-text
   posttest: |
     exec [ "$(cat test-text)" = "hi" ]
 
@@ -822,6 +822,8 @@
 
 - name: zstd compressed tar
   filenames: test.tar.zst
+  # note: the --zstd flag for tar requires a fairly recent (~2021) version of
+  # tar
   baseline: |
     tar --zstd -xf $1
 

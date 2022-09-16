@@ -7,13 +7,15 @@ pyversions](https://img.shields.io/pypi/pyversions/dtrx.svg?style=for-the-badge&
 
 <!-- toc -->
 
-- [Changes in this repo](#changes-in-this-repo)
-- [Development](#development)
-  - [Contributions](#contributions)
-  - [Issues](#issues)
-  - [Releases](#releases)
-  - [Tests](#tests)
-  - [Linting](#linting)
+- [dtrx](#dtrx)
+  - [Changes in this repo](#changes-in-this-repo)
+  - [Development](#development)
+    - [Contributions](#contributions)
+    - [Issues](#issues)
+    - [Releases](#releases)
+    - [Tests](#tests)
+    - [Linting](#linting)
+    - [Docker](#docker)
 
 <!-- tocstop -->
 
@@ -123,3 +125,31 @@ pre-commit install
 
 pre-commit will run anytime `git commit` runs (disable with `--no-verify`). You
 can manually run it with `pre-commit run`.
+
+### Docker
+
+The tests in CI (and locally) can be run inside a Docker container, which
+provides all the tested python versions.
+
+This image is defined at [`Dockerfile`](Dockerfile). It's pushed to the GitHub
+Container Registry so it can be managed by the `dtrx-py` organization on GitHub-
+Docker Hub charges for Organizations.
+
+There are Invoke tasks for building + pushing the Docker image, which push both
+a `:latest` tag as well as a `:2022-09-16` ISO8601 numbered tag. The tag can
+then be updated in the GitHub actions runner.
+
+> Note: there's a bit of complexity around how the image is used, because the
+> dtrx tests need to run as a non-root user (there's one test that checks for
+> error handling when the output directory is not accessible by the current
+> user). To deal with this, there's an entrypoint script that switches user to a
+> non-root user, but that still has read/write access to the mounted host volume
+> (which is the cwd, intended for local developement work). This is required on
+> Linux, where it's nice to have the host+container UID+GUID matching, so any
+> changes to the mounted host volume have the same permissions set.
+>
+> In the GitHub actions runner, we need to run inside the same container (to
+> have access to the correct python versions for testing), and the github action
+> for checkout assumes it can write to somewhat arbitrary locations in the file
+> system (basically root access). So we switch to the non-root user _after_
+> checkout.

@@ -10,52 +10,76 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
+    container:
+      image: ghcr.io/dtrx-py/dtrx:2022-09-16
+      options: "--user=root"
 
     steps:
-      # checkout v2, with recursive submodule update
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           submodules: recursive
 
       - name: 🛠️ Build
         run: |
           pip install build==0.7.0
-          python -m build
+          python3 -m build
 
       - uses: actions/upload-artifact@v2
         with:
           name: release-packages
           path: dist/
   test:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
+    container:
+      image: ghcr.io/dtrx-py/dtrx:2022-09-16
+      # we need to be root for checkout to work without pain
+      options: "--entrypoint='' --user=root"
 
     strategy:
       matrix:
         python: [py27, py36, py37, py38, py39, py3.10]
 
     steps:
-      # checkout v2, with recursive submodule update
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: 🧪 Run Tox Tests
+        run: |
+          # switch to a non-root user; this is required for one of the dtrx
+          # tests, which checks for an EACCESS error :/
+          bash /entrypoint.sh bash -c \
+            'sudo chown -R $(id -u):$(id -g) ${PWD} && TOX_ARGS="-e ${{ matrix.python }}" inv tox'
+
+  test-missing-file-command:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v3
         with:
           submodules: recursive
 
       # build the Docker image we use to run the tests
-      - name: 🧪 Run Tox Tests
-        run: TOX_ARGS='-e ${{ matrix.python }}' ./test.sh
+      - name: ✅ Test When `file` Command Not Present
+        run: |
+          pip install -r requirements.txt
+          inv test-nonexistent-file-cmd
 
   manpage:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
+    container:
+      image: ghcr.io/dtrx-py/dtrx:2022-09-16
+      options: "--user=root"
 
     steps:
-      # checkout v2, with recursive submodule update
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           submodules: recursive
 
       # build the Docker image we use to run the tests
       - name: 📝 Generate Man Pages
-        run: RUN_JOB=rst2man ./test.sh
+        run: inv rst2man
 
       # upload-artifact to save the output wheels
       - uses: actions/upload-artifact@v2
@@ -64,13 +88,14 @@ jobs:
           path: dtrx.1
 
   windows:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
-      # checkout v2, with recursive submodule update
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           submodules: recursive
 
-      - name: ❌ Verify Windows Install Fails
-        run: RUN_JOB=windows ./test.sh
+      - name: 🪟 Verify Windows Install Fails
+        run: |
+          pip install -r requirements.txt
+          inv windows

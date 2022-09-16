@@ -1,4 +1,5 @@
-FROM ubuntu:focal-20200319
+
+FROM ubuntu:jammy-20220815
 
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -6,50 +7,78 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     arj \
     binutils \
     brotli \
+    build-essential \
+    ca-certificates \
+    clang \
     cpio \
+    curl \
     file \
+    git \
     gzip \
     lhasa \
+    libbz2-dev \
     libffi-dev \
+    liblzma-dev \
+    libncursesw5-dev \
+    libreadline-dev \
+    libsqlite3-dev \
+    libssl-dev \
+    libxml2-dev \
+    libxmlsec1-dev \
+    llvm \
     lrzip \
     lzip \
+    make \
     p7zip-full \
-    python-pip-whl \
-    python2.7 \
+    python3 \
+    python3-dev \
     python3-pip \
-    python3.8 \
+    python3-venv \
+    sudo \
+    tk-dev \
     unrar \
     unzip \
     wget \
     xz-utils \
     zip \
+    zlib1g-dev \
     zstd \
-    software-properties-common && \
-    add-apt-repository ppa:deadsnakes/ppa && apt-get update && \
-    bash -c "\
-    apt-get install -y \
-    python2.7{,-dev} \
-    python3.6{,-dev} \
-    python3.7{,-dev,-distutils} \
-    python3.8{,-dev} \
-    python3.9{,-dev,-distutils}\
-    python3.10{,-dev,-distutils}\
-    python3-distutils" \
     && rm -rf /var/lib/apt/lists/*
 
-# create a user inside the container. if you specify your UID when building the
-# image, you can mount directories into the container with read-write access:
-# docker build -t "dtrx" -f Dockerfile --build-arg UID=$(id -u) .
+# pyenv
+RUN git clone --branch v2.3.4 https://github.com/pyenv/pyenv.git /pyenv
+ENV PYENV_ROOT /pyenv
+RUN /pyenv/bin/pyenv install 2.7.16
+# openssl version on jammy (3) is too new for python 3.6, and breaks :/
+# workaround is to use clang to build it
+# https://github.com/pyenv/pyenv/issues/2239#issuecomment-1079275184
+RUN CC=clang /pyenv/bin/pyenv install 3.6.15
+RUN /pyenv/bin/pyenv install 3.7.13
+RUN /pyenv/bin/pyenv install 3.8.13
+RUN /pyenv/bin/pyenv install 3.9.12
+RUN /pyenv/bin/pyenv install 3.10.4
+
+ENV PATH=/pyenv/bin:${PATH}
+
+# Python requirements
+COPY requirements.txt /tmp/requirements.txt
+RUN pip3 install -r /tmp/requirements.txt
+
+COPY entrypoint.sh /entrypoint.sh
+
 ARG UID=1010
-ARG UNAME=builder
-RUN useradd --uid ${UID} --create-home --user-group ${UNAME} && \
-    echo "${UNAME}:${UNAME}" | chpasswd
+ARG USERNAME=builder
+RUN echo "root:root" | chpasswd \
+    && adduser --disabled-password --uid "${UID}" --gecos "" "${USERNAME}" \
+    && echo "${USERNAME}:${USERNAME}" | chpasswd \
+    && echo "%${USERNAME}    ALL=(ALL)   NOPASSWD:    ALL" >> /etc/sudoers.d/${USERNAME} \
+    && chmod 0440 /etc/sudoers.d/${USERNAME} \
+    && adduser ${USERNAME} sudo
 
-ENV PATH=${PATH}:/home/${UNAME}/.local/bin
+# Ensure sudo group users are not
+# asked for a password when using
+# sudo command by ammending sudoers file
+RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> \
+    /etc/sudoers
 
-USER ${UNAME}
-
-# Need tox to run the tests, docutils for rst2man.py
-RUN pip3 install tox==3.15.2 docutils==0.16 pyyaml==5.4.1
-
-WORKDIR /workspace
+ENTRYPOINT ["/bin/bash", "/entrypoint.sh"]
