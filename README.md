@@ -13,7 +13,7 @@ pyversions](https://img.shields.io/pypi/pyversions/dtrx.svg?style=for-the-badge&
     - [Contributions](#contributions)
     - [Issues](#issues)
     - [Releases](#releases)
-    - [Tests](#tests)
+    - [Invoke + Tests](#invoke--tests)
     - [Linting](#linting)
     - [Docker](#docker)
 
@@ -96,22 +96,28 @@ for maintainers is the below steps:
 
 See the [`Makefile`](Makefile) for details on what that rule does.
 
-### Tests
+### Invoke + Tests
 
-There is a suite of tests that can be run either on the local python
-environment, or across all the supported python environments via docker:
+There's some minimal helper scripts for pyinvoke in [`tasks.py`](tasks.py).
+
+To bootstrap, run `pip install -r requirements.txt`, then `inv --list` to see
+available tasks:
 
 ```bash
-# run the suite from the current python environment
-pip install pyyaml  # test dependency
-python tests/compare.py
+❯ inv --list
+Available tasks:
 
-# run the tests in docker across all supported python versions (takes a while)
-./test.sh
-
-# run the tests in docker on one python version
-RUN_JOB=quick-test ./test.sh
+  build-docker                build docker image
+  push-docker                 push docker image
+  quick-test                  run quick tests in docker
+  rst2man                     run rst2man in docker
+  test-nonexistent-file-cmd   run test-nonexistent-file-cmd.sh
+  tox                         run tox in docker
+  windows                     just check that windows install fails. pulls a minimal wine docker image to test
 ```
+
+To run the tests, run `inv tox`. Takes a couple of minutes to go through all the
+python versions.
 
 ### Linting
 
@@ -144,7 +150,7 @@ then be updated in the GitHub actions runner.
 > error handling when the output directory is not accessible by the current
 > user). To deal with this, there's an entrypoint script that switches user to a
 > non-root user, but that still has read/write access to the mounted host volume
-> (which is the cwd, intended for local developement work). This is required on
+> (which is the cwd, intended for local development work). This is required on
 > Linux, where it's nice to have the host+container UID+GUID matching, so any
 > changes to the mounted host volume have the same permissions set.
 >

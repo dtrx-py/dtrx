@@ -910,3 +910,10 @@
     zip
     zst
     zstd
+
+- name: rpm
+  filenames: test.rpm
+  baseline: |
+    mkdir test
+    cd test
+    rpm2cpio ../$1 | cpio -i --make-directories --quiet --no-absolute-filenames

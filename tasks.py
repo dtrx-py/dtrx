@@ -82,6 +82,7 @@ def test_nonexistent_file_cmd(ctx):
 
 @invoke.task
 def windows(ctx):
+    """just check that windows install fails. pulls a minimal wine docker image to test"""
     if in_docker():
         print("error: this should not be run in docker!")
         sys.exit(1)
