@@ -874,6 +874,7 @@
     bz2
     cab
     cpio
+    crx
     deb
     dmg
     epub
@@ -917,3 +918,8 @@
     mkdir test
     cd test
     rpm2cpio ../$1 | cpio -i --make-directories --quiet --no-absolute-filenames
+
+- name: crx
+  filenames: getting-started.crx
+  baseline: |
+    unzip -q $1 -d getting-started

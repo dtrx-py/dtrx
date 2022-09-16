@@ -1181,7 +1181,7 @@ class ExtractorBuilder(object):
         "zip": {
             "extractors": (ZipExtractor, SevenExtractor),
             "mimetypes": ("zip",),
-            "extensions": ("zip", "jar", "epub", "xpi"),
+            "extensions": ("zip", "jar", "epub", "xpi", "crx"),
             "magic": ("(Zip|ZIP self-extracting) archive",),
         },
         "lzh": {
