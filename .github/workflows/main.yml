@@ -12,7 +12,7 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     container:
-      image: ghcr.io/dtrx-py/dtrx:2022-09-16
+      image: ghcr.io/dtrx-py/dtrx:2022-11-16
       options: "--user=root"
 
     steps:
@@ -32,13 +32,14 @@ jobs:
   test:
     runs-on: ubuntu-22.04
     container:
-      image: ghcr.io/dtrx-py/dtrx:2022-09-16
+      image: ghcr.io/dtrx-py/dtrx:2022-11-16
       # we need to be root for checkout to work without pain
       options: "--entrypoint='' --user=root"
 
     strategy:
       matrix:
-        python: [py27, py36, py37, py38, py39, py3.10]
+        # py36 is currently broken disable it
+        python: [py27, py37, py38, py39, py3.10, py3.11]
 
     steps:
       - uses: actions/checkout@v3
@@ -69,7 +70,7 @@ jobs:
   manpage:
     runs-on: ubuntu-22.04
     container:
-      image: ghcr.io/dtrx-py/dtrx:2022-09-16
+      image: ghcr.io/dtrx-py/dtrx:2022-11-16
       options: "--user=root"
 
     steps:

@@ -3,6 +3,9 @@ FROM ubuntu:jammy-20220815
 
 ARG DEBIAN_FRONTEND=noninteractive
 
+SHELL ["/bin/bash", "-c", "-o", "pipefail"]
+
+# hadolint ignore=DL3008
 RUN apt-get update && apt-get install -y --no-install-recommends \
     arj \
     binutils \
@@ -47,23 +50,30 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # pyenv
-RUN git clone --branch v2.3.4 https://github.com/pyenv/pyenv.git /pyenv
+RUN git clone --branch v2.3.6 https://github.com/pyenv/pyenv.git /pyenv
 ENV PYENV_ROOT /pyenv
-RUN /pyenv/bin/pyenv install 2.7.16
+RUN /pyenv/bin/pyenv install 2.7.18
 # openssl version on jammy (3) is too new for python 3.6, and breaks :/
 # workaround is to use clang to build it
 # https://github.com/pyenv/pyenv/issues/2239#issuecomment-1079275184
+# hadolint ignore=DL3059
 RUN CC=clang /pyenv/bin/pyenv install 3.6.15
-RUN /pyenv/bin/pyenv install 3.7.13
-RUN /pyenv/bin/pyenv install 3.8.13
-RUN /pyenv/bin/pyenv install 3.9.12
-RUN /pyenv/bin/pyenv install 3.10.4
+# hadolint ignore=DL3059
+RUN /pyenv/bin/pyenv install 3.7.15
+# hadolint ignore=DL3059
+RUN /pyenv/bin/pyenv install 3.8.15
+# hadolint ignore=DL3059
+RUN /pyenv/bin/pyenv install 3.9.15
+# hadolint ignore=DL3059
+RUN /pyenv/bin/pyenv install 3.10.8
+# hadolint ignore=DL3059
+RUN /pyenv/bin/pyenv install 3.11.0
 
 ENV PATH=/pyenv/bin:${PATH}
 
 # Python requirements
 COPY requirements.txt /tmp/requirements.txt
-RUN pip3 install -r /tmp/requirements.txt
+RUN pip3 install --no-cache-dir -r /tmp/requirements.txt
 
 COPY entrypoint.sh /entrypoint.sh
 

@@ -98,7 +98,7 @@ See the [`Makefile`](Makefile) for details on what that rule does.
 
 ### Invoke + Tests
 
-There's some minimal helper scripts for pyinvoke in [`tasks.py`](tasks.py).
+There's some minimal helper scripts for pyinvoke under [`tasks/`](tasks/).
 
 To bootstrap, run `pip install -r requirements.txt`, then `inv --list` to see
 available tasks:

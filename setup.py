@@ -1,4 +1,6 @@
-# Thin wrapper for backwards compatibility
+"""
+Thin wrapper for backwards compatibility
+"""
 
 import setuptools
 
