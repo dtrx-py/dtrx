@@ -95,6 +95,13 @@
     cd test-1.23
     unar -D ../$1 || unrar x ../$1
 
+- name: many files .rar
+  filenames: test-lots-files.rar
+  baseline: |
+    mkdir test-lots-files
+    cd test-lots-files
+    unar -D ../$1 || unrar x ../$1
+
 - name: basic .arj
   filenames: test-1.23.arj
   baseline: |

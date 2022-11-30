@@ -297,8 +297,13 @@ class BaseExtractor(object):
                         % (self.filename)
                     )
 
+    def send_stdout_to_dev_null(self):
+        return True
+
     def run_pipes(self, final_stdout=None):
-        has_output_target = True if final_stdout else False
+        has_output_target = (
+            True if final_stdout or self.send_stdout_to_dev_null() else False
+        )
         if not self.pipes:
             return
         elif final_stdout is None:
@@ -714,6 +719,9 @@ class SevenExtractor(NoPipeExtractor):
             elif fn_index is not None:
                 yield line[fn_index:]
         self.archive.close()
+
+    def send_stdout_to_dev_null(self):
+        return False
 
     def timeout_check(self, pipe):
         nbs = NonblockingRead(pipe.stdout)
