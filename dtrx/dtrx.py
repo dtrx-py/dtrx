@@ -67,7 +67,7 @@ try:
 except NameError:
     from sets import Set as set
 
-VERSION = "8.5.0"
+VERSION = "8.5.1"
 VERSION_BANNER = """dtrx version %s
 Copyright © 2006-2011 Brett Smith <brettcsmith@brettcsmith.org>
 Copyright © 2008 Peter Kelemen <Peter.Kelemen@gmail.com>
@@ -81,9 +81,7 @@ option) any later version.
 This program is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
-Public License for more details.""" % (
-    VERSION,
-)
+Public License for more details.""" % (VERSION,)
 
 # Python3.6 optparse has a hard time parsing this, so ascii transform it
 if sys.version_info[:2] == (3, 6):

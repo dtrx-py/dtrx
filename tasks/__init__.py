@@ -39,18 +39,22 @@ def test_nonexistent_file_cmd(ctx):
 
 @invoke.task
 def windows(ctx):
-    """just check that windows install fails. pulls a minimal wine docker image to test
+    """
+    just check that windows install fails. pulls a minimal wine docker image to test
     """
     if docker.in_docker():
         print("error: this should not be run in docker!")
         sys.exit(1)
     ctx.run(
-        'docker run --rm -v "$(pwd)":/workdir -t tobix/pywine:3.9 bash -c \'wine pip'
-        " install /workdir' | tee /dev/stderr | grep -q 'ERROR: No matching"
-        " distribution found for platform==unsupported' || echo \"ERROR: pip install"
-        ' should fail!"',
+        (
+            'docker run --rm -v "$(pwd)":/workdir -t tobix/pywine:3.9 bash -c \'wine'
+            " pip install /workdir' | tee /dev/stderr | grep -q 'UnsupportedPython: One"
+            " or more packages do not support'"
+        ),
         pty=True,
     )
+
+    print("Hooray 🎉! Windows install failed as expected.")
 
 
 # Top-level tasks
