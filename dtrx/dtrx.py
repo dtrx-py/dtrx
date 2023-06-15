@@ -764,7 +764,7 @@ class ZstandardExtractor(NoPipeExtractor):
                 if fn_index is not None:
                     break
                 else:
-                    fn_index = string.rindex(line, " ") + 1
+                    fn_index = line.rindex(" ") + 1
             elif fn_index is not None:
                 yield line[fn_index:]
         self.archive.close()
