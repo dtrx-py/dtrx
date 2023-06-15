@@ -713,8 +713,10 @@ class LZHExtractor(ZipExtractor):
 
 class SevenExtractor(NoPipeExtractor):
     file_type = "7z file"
-    list_command = ["7z", "l"]
+    list_command = ["7z", "l", "-ba"]
     border_re = re.compile("^[- ]+$")
+    extract_command = ["7z", "x"]
+    space_re = re.compile(" ")
 
     @property
     def extract_command(self):
@@ -727,15 +729,10 @@ class SevenExtractor(NoPipeExtractor):
         return cmd
 
     def get_filenames(self):
-        fn_index = None
         for line in NoPipeExtractor.get_filenames(self):
-            if self.border_re.match(line):
-                if fn_index is not None:
-                    break
-                else:
-                    fn_index = string.rindex(line, " ") + 1
-            elif fn_index is not None:
-                yield line[fn_index:]
+            if " " in line:
+                pos = line.rindex(" ") + 1
+                yield line[pos:]
         self.archive.close()
 
     def send_stdout_to_dev_null(self):
