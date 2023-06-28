@@ -34,7 +34,6 @@ import re
 import shutil
 import signal
 import stat
-import string
 import struct
 import sys
 import tempfile
@@ -60,12 +59,12 @@ if sys.version_info[0] >= 3:
         return (a > b) - (a < b)
 
 else:
-    get_input = raw_input  # noqa: F821
+    get_input = raw_input  # noqa: F821 pylint: disable=undefined-variable
 
 try:
-    set
+    set  # noqa: F821 pylint: disable=used-before-assignment
 except NameError:
-    from sets import Set as set
+    from sets import Set as set  # noqa: F401 pylint: disable=import-error
 
 VERSION = "8.5.3"
 VERSION_BANNER = """dtrx version %s
@@ -704,18 +703,81 @@ class SevenExtractor(NoPipeExtractor):
     file_type = "7z file"
     extract_command = ["7z", "x"]
     list_command = ["7z", "l"]
-    border_re = re.compile("^[- ]+$")
 
     def get_filenames(self):
-        fn_index = None
-        for line in NoPipeExtractor.get_filenames(self):
-            if self.border_re.match(line):
-                if fn_index is not None:
-                    break
-                else:
-                    fn_index = string.rindex(line, " ") + 1
-            elif fn_index is not None:
-                yield line[fn_index:]
+        """
+        The 7z list command outputs stuff like this:
+
+            ...
+            --
+            Path = tests/test-1.23.7z
+            Type = 7z
+            Physical Size = 183
+            Headers Size = 183
+            Solid = -
+            Blocks = 0
+
+            Date      Time    Attr         Size   Compressed  Name
+            ------------------- ----- ------------ ------------  ------------------------
+            2006-10-28 14:38:44 ....A            0            0  test-1.23/1/2/3
+            2006-10-28 14:38:49 ....A            0            0  test-1.23/a/b
+            2006-10-28 14:38:51 ....A            0            0  test-1.23/foobar
+            2006-10-28 14:38:49 D....            0            0  test-1.23/a
+            2006-10-28 14:38:44 D....            0            0  test-1.23/1/2
+            2006-10-28 14:38:39 D....            0            0  test-1.23/1
+            2006-10-28 14:38:51 D....            0            0  test-1.23
+            ------------------- ----- ------------ ------------  ------------------------
+            2006-10-28 14:38:51                  0            0  3 files, 4 folders
+
+        It would be preferable to just join the output lines, then split on the
+        list header (Date  Time ..) line, then split the remaining data on the
+        "--..." separator lines, but the original implementation operated
+        line-by-line, so in case there's users with 7z output that doesn't fit
+        comfortably in memory, stick with a clunky linewise implementation.
+        """
+
+        # Regex for the line that separates the list output from the metadata
+        list_start_re = r"^\s+Date\s+Time\s+Attr\s+Size\s+Compressed\s+Name"
+
+        # Define the regular expression pattern to match the path column data
+        path_pattern = (
+            r"\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}\s+[\.\S]+\s+\d+\s+\d+\s+(.+)"
+        )
+
+        list_header_found = False
+        list_output_started = False
+
+        lines = NoPipeExtractor.get_filenames(self)
+
+        # scan for the list header
+        for line in lines:
+            if re.match(list_start_re, line):
+                # found separator
+                list_header_found = True
+                break
+        if not list_header_found:
+            # no list header found, bail
+            return
+
+        # scan for the start of list output
+        for line in lines:
+            if line.startswith("-"):
+                # found the start of the list output
+                list_output_started = True
+                break
+        if not list_output_started:
+            # no list output found, bail
+            return
+
+        # match for each line of the list output
+        for line in lines:
+            if line.startswith("-"):
+                # found the end of the list output
+                break
+            match = re.match(path_pattern, line.strip())
+            if match:
+                yield match.group(1)
+
         self.archive.close()
 
     def send_stdout_to_dev_null(self):
@@ -747,7 +809,7 @@ class ZstandardExtractor(NoPipeExtractor):
                 if fn_index is not None:
                     break
                 else:
-                    fn_index = string.rindex(line, " ") + 1
+                    fn_index = line.rindex(" ") + 1
             elif fn_index is not None:
                 yield line[fn_index:]
         self.archive.close()

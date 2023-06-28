@@ -77,6 +77,12 @@
   baseline: |
     7z x $1
 
+- name: list .7z
+  filenames: test-1.23.7z
+  options: -l
+  baseline: |
+    echo -e "$1:\n""$(7z l $1 | rg --replace '$1' '^[0-9]+-[0-9]+-[0-9]+ +[0-9]+:[0-9]+:[0-9]+ +[\.A-Z]+ +[0-9]+ +[0-9]+ +(.*)$')"
+
 - name: basic .lzma
   filenames: test-1.23.tar.lzma
   baseline: |
