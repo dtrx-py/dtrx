@@ -157,8 +157,10 @@ class DirectoryChecker(FilenameChecker):
     free_close = None
 
     def create(self):
-        return tempfile.mkdtemp(prefix=self.original_name + ".", dir=".")
-
+        dirname = tempfile.mkdtemp(prefix=self.original_name + ".", dir=".")
+        # We want to directory to be relative to current directory
+        dirname = os.path.join(".",os.path.relpath(dirname))
+        return dirname
 
 class NonblockingRead(object):
     iostream = None
@@ -421,7 +423,11 @@ class BaseExtractor(object):
         self.ignore_pw = ignore_passwd
         self.password = password
         try:
-            self.target = tempfile.mkdtemp(prefix=".dtrx-", dir=".")
+            dirname = tempfile.mkdtemp(prefix=".dtrx-", dir=".")
+            # We want to directory to be relative to current directory
+            dirname = os.path.join(".",os.path.relpath(dirname))
+            self.target = dirname
+
         except (OSError, IOError) as error:
             raise ExtractorError("cannot extract here: %s" % (error.strerror,))
         old_path = os.path.realpath(os.curdir)
