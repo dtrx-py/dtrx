@@ -25,7 +25,7 @@ jobs:
           pip install build==0.7.0
           python3 -m build
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         with:
           name: release-packages
           path: dist/
@@ -83,7 +83,7 @@ jobs:
         run: inv rst2man
 
       # upload-artifact to save the output wheels
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         with:
           name: manpage-output
           path: dtrx.1
