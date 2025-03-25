@@ -1350,7 +1350,7 @@ class ExtractorBuilder(object):
         ("tar", "gzip", "tar.gz", "tgz"),
         ("tar", "lzma", "tar.lzma", "tlz"),
         ("tar", "xz", "tar.xz", "txz"),
-        ("tar", "lz", "tar.lz"),
+        ("tar", "lzip", "tar.lz"),
         ("tar", "compress", "tar.Z", "taz"),
         ("tar", "lrz", "tar.lrz"),
         ("tar", "zstd", "tar.zst"),
