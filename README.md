@@ -66,8 +66,8 @@ We push a pre-built image to Docker Hub as `dtrx-py/dtrx:latest`, so you can
 pull that image and run the tests like so:
 
 ```bash
-docker run --rm -it --mount $(pwd)/workspace dtrx-py/dtrx:latest \
-   bash -c "cd /workspace && uv run -- tests/compare.py"
+docker run --rm -it --volume $(pwd):/workspace ghcr.io/dtrx-py/dtrx:latest \
+   bash -c "cp -r /workspace ~/scratch && cd ~/scratch && uv run -- tests/compare.py"
 ```
 
 ### Releases
@@ -78,8 +78,9 @@ for maintainers is the below steps:
 1. update the version specifier:
 
    ```bash
-   # update the VERSION value in dtrx/dtrx.py, then:
-   ❯ git add dtrx/dtrx.py
+   # update the version appropriately
+   ❯ uv version X.Y.Z
+   ❯ git add pyproject.toml uv.lock
    ❯ git commit  # fill in the commit message
    ```
 

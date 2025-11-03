@@ -19,12 +19,11 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, see <http://www.gnu.org/licenses/>.
 
-# Python 2.3 string methods: 'rfind', 'rindex', 'rjust', 'rstrip'
-
 from __future__ import absolute_import, print_function
 
 import errno
 import fcntl
+import importlib.metadata
 import itertools
 import logging
 import mimetypes
@@ -35,38 +34,24 @@ import shutil
 import signal
 import stat
 import struct
+import subprocess
 import sys
 import tempfile
 import termios
 import textwrap
 import traceback
+import urllib.parse as urlparse
 from functools import cmp_to_key, total_ordering
 
-# Python 3 compatibility hacks commence
-try:
-    import urlparse
-except ImportError:
-    import urllib.parse as urlparse
-try:
-    import subprocess32 as subprocess
-except ImportError:
-    import subprocess
 
-if sys.version_info[0] >= 3:
-    get_input = input
+def cmp(a, b):
+    return (a > b) - (a < b)
 
-    def cmp(a, b):
-        return (a > b) - (a < b)
-
-else:
-    get_input = raw_input  # noqa: F821
 
 try:
-    set
-except NameError:
-    from sets import Set as set
-
-VERSION = "8.6.0"
+    VERSION = importlib.metadata.version("dtrx")
+except importlib.metadata.PackageNotFoundError:
+    VERSION = "DEVELOPMENT"
 VERSION_BANNER = """dtrx version %s
 Copyright © 2006-2011 Brett Smith <brettcsmith@brettcsmith.org>
 Copyright © 2008 Peter Kelemen <Peter.Kelemen@gmail.com>
@@ -81,11 +66,6 @@ This program is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
 Public License for more details.""" % (VERSION,)
-
-# Python3.6 optparse has a hard time parsing this, so ascii transform it
-if sys.version_info[:2] == (3, 6):
-    VERSION_BANNER = VERSION_BANNER.encode("ascii", errors="ignore").decode("ascii")
-
 
 MATCHING_DIRECTORY = 1
 ONE_ENTRY_KNOWN = 2
@@ -172,27 +152,9 @@ class NonblockingRead(object):
         flags = fcntl.fcntl(fd, fcntl.F_GETFL)
         fcntl.fcntl(fd, fcntl.F_SETFL, flags | os.O_NONBLOCK)
 
-    def python_2_readlines(self):
-        # XXX: There seems to be a bug in Python 2 where readline() returns
-        # "IOError: [Errno 11] Resource temporarily unavailable" on a
-        # non-blocking read from a pipe where the output lacks a newline.
-        # It doesn't happen in Python 3, so this hack can be deleted once we
-        # no longer care about Python 2.
-        out = ""
-        try:
-            while True:
-                # read a single byte at a time until we hit IOError
-                out += self.iostream.read(1).decode("ascii", "ignore")
-        except IOError:
-            pass
-        return out.splitlines(True)
-
     def readlines(self):
-        if sys.version_info[0] >= 3:
-            out = self.iostream.readlines()
-            return [line.decode("ascii", "ignore") for line in out]
-        else:
-            return self.python_2_readlines()
+        out = self.iostream.readlines()
+        return [line.decode("ascii", "ignore") for line in out]
 
 
 class ExtractorError(Exception):
@@ -1057,7 +1019,7 @@ class BasePolicy(object):
         while True:
             print("\n".join(question))
             try:
-                answer = get_input(self.prompt)
+                answer = input(self.prompt)
             except EOFError:
                 return self.answers[""]
             try:
