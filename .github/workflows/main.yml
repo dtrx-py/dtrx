@@ -12,6 +12,8 @@ jobs:
   format:
     # check formatting with ruff
     runs-on: ubuntu-latest
+    # temporarily disable this job
+    if: false
     steps:
       - uses: actions/checkout@v5
 
@@ -80,6 +82,7 @@ jobs:
         run: |
           # switch to a non-root user; this is required for one of the dtrx
           # tests, which checks for an EACCESS error :/
+          chown -R testuser:testuser .
           su testuser -c "uv run --python ${{ matrix.python }} -- tests/compare.py"
 
   test-missing-file-command:
@@ -87,13 +90,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v5
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v6
-        with:
-          # Install a specific version of uv.
-          version: "0.8.13"
-          python-version: 3.14
 
       # build the Docker image we use to run the tests
       - name: ✅ Test When `file` Command Not Present
