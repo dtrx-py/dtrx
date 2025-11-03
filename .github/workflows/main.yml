@@ -68,8 +68,9 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/dtrx-py/dtrx:2025-11-03
+      # we need tty for the test for password zip noninteractive prompt
       # we need to be root for checkout to work without pain
-      options: "--user=root"
+      options: "-t --user=root"
 
     strategy:
       matrix:

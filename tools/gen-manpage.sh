@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Small script to run rst2man.py and error if there's any output
-set -e
+set -ex
 
 # rst2man.py doesn't return non-zero on warnings or errors 🤦
 # instead, if it outputs anything on stdout or stderr, assume it's some abnormal
