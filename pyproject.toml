@@ -1,14 +1,52 @@
-[build-system]
-requires = [
-    # latest at time of writing
-    "setuptools >= 44.1.1",
-    "wheel >= 0.37.0",
+[project]
+name = "dtrx"
+version = "8.7.0"
+description = "Script to intelligently extract multiple archive types"
+readme = "README.md"
+license = "GPL-3.0-or-later"
+authors = [{ name = "Brett Smith", email = "brettcsmith@brettcsmith.org" }]
+maintainers = [{ name = "Brett Smith", email = "brettcsmith@brettcsmith.org" }]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: End Users/Desktop",
+    "Intended Audience :: System Administrators",
+    "Natural Language :: English",
+    "Operating System :: POSIX",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Topic :: Utilities",
 ]
-build-backend = 'setuptools.build_meta'
+requires-python = ">=3.8"
+dependencies = [
+    # Intentionally disable windows install, dtrx is not supported on windows
+    "unsupported-python==1.0.0; platform_system=='Windows'",
+]
 
-[tool.black]
+[project.urls]
+Homepage = "http://www.brettcsmith.org/2007/dtrx/"
+Repository = "https://github.com/dtrx-py/dtrx"
+Download = "https://github.com/dtrx-py/dtrx"
+
+[project.scripts]
+dtrx = "dtrx.dtrx:main"
+
+[dependency-groups]
+dev = [
+    "docutils==0.16",
+    "pyyaml==5.3.1",
+    "ruff>=0.14.3",
+]
+
+[tool.ruff]
+target-version = "py312"
 preview = true
-target-version = ['py38']
+line-length = 100
 
-[tool.isort]
-profile = 'black'
+[build-system]
+requires = ["setuptools>=75", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["dtrx*"]

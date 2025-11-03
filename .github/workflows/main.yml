@@ -9,94 +9,132 @@ on:
       - master
 
 jobs:
+  format:
+    # check formatting with ruff
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.14
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          # Install a specific version of uv.
+          version: "0.8.13"
+          python-version: 3.14
+
+      - name: Install dependencies
+        run: |
+          uv sync
+
+      - name: Format check
+        run: |
+          uv run -- ruff check --select I .
+          uv run -- ruff format --diff
+
+      - name: Lint check
+        run: |
+          uv run -- ruff check .
+
   build:
-    runs-on: ubuntu-22.04
-    container:
-      image: ghcr.io/dtrx-py/dtrx:2022-11-16
-      options: "--user=root"
+    runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
-        with:
-          submodules: recursive
+      - uses: actions/checkout@v5
 
-      - name: 🛠️ Build
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          # Install a specific version of uv.
+          version: "0.8.13"
+          python-version: 3.14
+
+      - name: 🏗️ Build Wheels etc
         run: |
-          pip install build==0.7.0
-          python3 -m build
+          make
 
       - uses: actions/upload-artifact@v4
         with:
-          name: release-packages
-          path: dist/
+          name: wheels-and-sdist
+          path: dist
+
   test:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     container:
-      image: ghcr.io/dtrx-py/dtrx:2022-11-16
+      image: ghcr.io/dtrx-py/dtrx:2025-11-03
       # we need to be root for checkout to work without pain
-      options: "--entrypoint='' --user=root"
+      options: "--user=root"
 
     strategy:
       matrix:
-        # py36 is currently broken disable it
-        python: [py27, py37, py38, py39, py3.10, py3.11, py3.12, py3.13]
+        python: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
 
     steps:
-      - uses: actions/checkout@v3
-        with:
-          submodules: recursive
+      - uses: actions/checkout@v5
 
-      - name: 🧪 Run Tox Tests
+      - name: 🧪 Run Tests
         run: |
           # switch to a non-root user; this is required for one of the dtrx
           # tests, which checks for an EACCESS error :/
-          bash /entrypoint.sh bash -c \
-            'sudo chown -R $(id -u):$(id -g) ${PWD} && TOX_ARGS="-e ${{ matrix.python }}" inv tox'
+          su testuser -c "uv run --python ${{ matrix.python }} -- tests/compare.py"
 
   test-missing-file-command:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
         with:
-          submodules: recursive
+          # Install a specific version of uv.
+          version: "0.8.13"
+          python-version: 3.14
 
       # build the Docker image we use to run the tests
       - name: ✅ Test When `file` Command Not Present
         run: |
-          pip install -r requirements.txt
-          inv test-nonexistent-file-cmd
+          ./tools/test-nonexistent-file-cmd.sh
 
   manpage:
-    runs-on: ubuntu-22.04
-    container:
-      image: ghcr.io/dtrx-py/dtrx:2022-11-16
-      options: "--user=root"
+    runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
         with:
-          submodules: recursive
+          # Install a specific version of uv.
+          version: "0.8.13"
+          python-version: 3.14
 
       # build the Docker image we use to run the tests
       - name: 📝 Generate Man Pages
-        run: inv rst2man
+        run: tools/gen-manpage.sh archived/README dtrx.1
 
-      # upload-artifact to save the output wheels
+      # upload-artifact to save the generated manpage
       - uses: actions/upload-artifact@v4
         with:
           name: manpage-output
           path: dtrx.1
 
   windows:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
         with:
-          submodules: recursive
+          # Install a specific version of uv.
+          version: "0.8.13"
+          python-version: 3.14
 
       - name: 🪟 Verify Windows Install Fails
-        run: |
-          pip install -r requirements.txt
-          inv windows
+        run: ./tools/test-windows-install-fails.sh

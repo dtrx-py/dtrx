@@ -1,5 +1,5 @@
 
-FROM ubuntu:jammy-20220815
+FROM ubuntu:jammy-20251001
 
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -49,47 +49,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     zstd \
     && rm -rf /var/lib/apt/lists/*
 
-# pyenv
-RUN git clone --branch v2.3.6 https://github.com/pyenv/pyenv.git /pyenv
-ENV PYENV_ROOT /pyenv
-RUN /pyenv/bin/pyenv install 2.7.18
-# openssl version on jammy (3) is too new for python 3.6, and breaks :/
-# workaround is to use clang to build it
-# https://github.com/pyenv/pyenv/issues/2239#issuecomment-1079275184
-# hadolint ignore=DL3059
-RUN CC=clang /pyenv/bin/pyenv install 3.6.15
-# hadolint ignore=DL3059
-RUN /pyenv/bin/pyenv install 3.7.15
-# hadolint ignore=DL3059
-RUN /pyenv/bin/pyenv install 3.8.15
-# hadolint ignore=DL3059
-RUN /pyenv/bin/pyenv install 3.9.15
-# hadolint ignore=DL3059
-RUN /pyenv/bin/pyenv install 3.10.8
-# hadolint ignore=DL3059
-RUN /pyenv/bin/pyenv install 3.11.0
+# Create a non-root user for running tests
+RUN groupadd --gid 1000 testuser && \
+    useradd --uid 1000 --gid testuser --shell /bin/bash --create-home testuser && \
+    echo 'testuser ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
-ENV PATH=/pyenv/bin:${PATH}
+# Install uv, pinned version
+ARG UV_VERSION=0.9.7
+RUN curl --proto '=https' --tlsv1.2 -LsSf https://github.com/astral-sh/uv/releases/download/${UV_VERSION}/uv-installer.sh | sh
+RUN cp $HOME/.local/bin/uv /usr/local/bin/uv && uv --version
 
-# Python requirements
-COPY requirements.txt /tmp/requirements.txt
-RUN pip3 install --no-cache-dir -r /tmp/requirements.txt
-
-COPY entrypoint.sh /entrypoint.sh
-
-ARG UID=1010
-ARG USERNAME=builder
-RUN echo "root:root" | chpasswd \
-    && adduser --disabled-password --uid "${UID}" --gecos "" "${USERNAME}" \
-    && echo "${USERNAME}:${USERNAME}" | chpasswd \
-    && echo "%${USERNAME}    ALL=(ALL)   NOPASSWD:    ALL" >> /etc/sudoers.d/${USERNAME} \
-    && chmod 0440 /etc/sudoers.d/${USERNAME} \
-    && adduser ${USERNAME} sudo
-
-# Ensure sudo group users are not
-# asked for a password when using
-# sudo command by ammending sudoers file
-RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> \
-    /etc/sudoers
-
-ENTRYPOINT ["/bin/bash", "/entrypoint.sh"]
+# Switch to non-root user
+USER testuser

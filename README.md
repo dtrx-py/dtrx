@@ -12,10 +12,8 @@ pyversions](https://img.shields.io/pypi/pyversions/dtrx.svg?style=for-the-badge&
   - [Development](#development)
     - [Contributions](#contributions)
     - [Issues](#issues)
+    - [Running Tests](#running-tests)
     - [Releases](#releases)
-    - [Invoke + Tests](#invoke--tests)
-    - [Linting](#linting)
-    - [Docker](#docker)
 
 <!-- tocstop -->
 
@@ -46,14 +44,6 @@ This repo contains some patches on top of the original source to enable using
 20.04+, where the `dtrx` apt package was removed from the default ppas (likely
 due to being python2 only).
 
-I attempted to get the tests all working via `tox` , for which I used a
-Dockerfile to try to get some kind of environment consistency. You can run the
-tests by running (requires Docker installed):
-
-```bash
-./test.sh
-```
-
 ## Development
 
 ### Contributions
@@ -66,6 +56,19 @@ changes.
 When posting an issue, it can be very handy to provide any example files (for
 example, the archive that failed to extract) or reproduction steps so we can
 address the problem quickly.
+
+### Running Tests
+
+The tests are most easily run from Docker. Check out the
+[`Dockerfile`](Dockerfile) for how that's set up.
+
+We push a pre-built image to Docker Hub as `dtrx-py/dtrx:latest`, so you can
+pull that image and run the tests like so:
+
+```bash
+docker run --rm -it --mount $(pwd)/workspace dtrx-py/dtrx:latest \
+   bash -c "cd /workspace && uv run -- tests/compare.py"
+```
 
 ### Releases
 
@@ -80,13 +83,10 @@ for maintainers is the below steps:
    ❯ git commit  # fill in the commit message
    ```
 
-2. create an annotated tag for the release. usually good to put a list of new
-   commits since the previous tag, for example by listing them with:
+2. create an annotated tag for the release.
 
    ```bash
-   ❯ git log $(git describe --tags --abbrev=0)..HEAD --oneline
-   # create the annotated tag
-   ❯ git tag -a <version number>
+   ❯ git tag -a {,-m}X.Y.Z
    ```
 
    be sure to push the tag, `git push --tags`.
@@ -95,67 +95,3 @@ for maintainers is the below steps:
    PyPi
 
 See the [`Makefile`](Makefile) for details on what that rule does.
-
-### Invoke + Tests
-
-There's some minimal helper scripts for pyinvoke under [`tasks/`](tasks/).
-
-To bootstrap, run `pip install -r requirements.txt`, then `inv --list` to see
-available tasks:
-
-```bash
-❯ inv --list
-Available tasks:
-
-  build-docker                build docker image
-  push-docker                 push docker image
-  quick-test                  run quick tests in docker
-  rst2man                     run rst2man in docker
-  test-nonexistent-file-cmd   run test-nonexistent-file-cmd.sh
-  tox                         run tox in docker
-  windows                     just check that windows install fails. pulls a minimal wine docker image to test
-```
-
-To run the tests, run `inv tox`. Takes a couple of minutes to go through all the
-python versions.
-
-### Linting
-
-Linting is provided by [pre-commit](pre-commit.com). To use it, first install
-the pre-commit hook:
-
-```bash
-pip install pre-commit
-pre-commit install
-```
-
-pre-commit will run anytime `git commit` runs (disable with `--no-verify`). You
-can manually run it with `pre-commit run`.
-
-### Docker
-
-The tests in CI (and locally) can be run inside a Docker container, which
-provides all the tested python versions.
-
-This image is defined at [`Dockerfile`](Dockerfile). It's pushed to the GitHub
-Container Registry so it can be managed by the `dtrx-py` organization on GitHub-
-Docker Hub charges for Organizations.
-
-There are Invoke tasks for building + pushing the Docker image, which push both
-a `:latest` tag as well as a `:2022-09-16` ISO8601 numbered tag. The tag can
-then be updated in the GitHub actions runner.
-
-> Note: there's a bit of complexity around how the image is used, because the
-> dtrx tests need to run as a non-root user (there's one test that checks for
-> error handling when the output directory is not accessible by the current
-> user). To deal with this, there's an entrypoint script that switches user to a
-> non-root user, but that still has read/write access to the mounted host volume
-> (which is the cwd, intended for local development work). This is required on
-> Linux, where it's nice to have the host+container UID+GUID matching, so any
-> changes to the mounted host volume have the same permissions set.
->
-> In the GitHub actions runner, we need to run inside the same container (to
-> have access to the correct python versions for testing), and the github action
-> for checkout assumes it can write to somewhat arbitrary locations in the file
-> system (basically root access). So we switch to the non-root user _after_
-> checkout.

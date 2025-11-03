@@ -12,8 +12,8 @@ endif
 BUILD_ARTIFACTS= \
     dist/dtrx-$(DTRX_TAGNAME).py \
     dist/dtrx-$(DTRX_TAGNAME).pyz \
-    dist/dtrx-8.3.0-py2.py3-none-any.whl \
-    dist/dtrx-8.3.0.tar.gz \
+    dist/dtrx-$(DTRX_TAGNAME)-py2.py3-none-any.whl \
+    dist/dtrx-$(DTRX_TAGNAME).tar.gz \
 
 .PHONY: build
 build: $(BUILD_ARTIFACTS)
@@ -29,15 +29,17 @@ dist/dtrx-$(DTRX_TAGNAME).pyz: dtrx/dtrx.py
 	python -m zipapp dtrx --compress --main "dtrx:main" --python "/usr/bin/env python" --output $@
 
 # build the wheel and source dist
-dist/dtrx-8.3.0-py2.py3-none-any.whl dist/dtrx-8.3.0.tar.gz &: dtrx/dtrx.py
-	python -m build
+dist/dtrx-$(DTRX_TAGNAME)-py2.py3-none-any.whl dist/dtrx-$(DTRX_TAGNAME).tar.gz &: dtrx/dtrx.py
+	uv build --no-build-logs
 
 .PHONY: publish-release
 publish-release: $(BUILD_ARTIFACTS)
 # first confirm that we're on a tag
-	git describe --exact-match || (echo ERROR: not on a tag; false)
+	@git describe --exact-match > /dev/null || (echo ERROR: not on a tag; false)
+# if PYPI_TOKEN is not set, fail
+	@test -n "$$PYPI_TOKEN" || (echo "ERROR: PYPI_TOKEN environment variable is not set"; false)
 # prompt before firing off the release
 	@echo -n "About to publish to GitHub and PyPi, are you sure? [y/N] " && read ans && [ $${ans:-'N'} = 'y' ]
 	gh release create --generate-notes $(DTRX_TAGNAME)
 	gh release upload $(DTRX_TAGNAME) dist/*
-	twine upload dist/dtrx-$(DTRX_TAGNAME).tar.gz dist/dtrx-$(DTRX_TAGNAME)-py2.py3-none-any.whl
+	uv publish --token="${PYPI_TOKEN}"dist/dtrx-$(DTRX_TAGNAME).tar.gz dist/dtrx-$(DTRX_TAGNAME)-py2.py3-none-any.whl
