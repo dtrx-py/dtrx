@@ -84,7 +84,7 @@ jobs:
           # switch to a non-root user; this is required for one of the dtrx
           # tests, which checks for an EACCESS error :/
           chown -R testuser:testuser .
-          su testuser -c "uv run --python ${{ matrix.python }} -- tests/compare.py"
+          su testuser --pty -c "uv run --python ${{ matrix.python }} -- tests/compare.py"
 
   test-missing-file-command:
     runs-on: ubuntu-latest
