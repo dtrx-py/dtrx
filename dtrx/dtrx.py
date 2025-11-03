@@ -34,7 +34,6 @@ import re
 import shutil
 import signal
 import stat
-import string
 import struct
 import sys
 import tempfile
@@ -225,9 +224,7 @@ class BaseExtractor(object):
         # option based on what's supported, since this behavior changed
         if encoding in ("lrzip", "lrz"):
             # need to check if this version of lrzip supports the -Q option
-            output = subprocess.check_output(
-                "lrzip --help", stderr=subprocess.STDOUT, shell=True
-            )
+            output = subprocess.check_output("lrzip --help", stderr=subprocess.STDOUT, shell=True)
             if b"-Q" in output:
                 decoder = ["lrzcat", "-Q"]
             else:
@@ -266,9 +263,7 @@ class BaseExtractor(object):
         try:
             logger.debug("running command: {}".format(command))
             processes.append(
-                subprocess.Popen(
-                    command, stdin=stdin, stdout=stdout, stderr=subprocess.PIPE
-                )
+                subprocess.Popen(command, stdin=stdin, stdout=stdout, stderr=subprocess.PIPE)
             )
         except OSError as error:
             if error.errno == errno.ENOENT:
@@ -302,9 +297,7 @@ class BaseExtractor(object):
         return True
 
     def run_pipes(self, final_stdout=None):
-        has_output_target = (
-            True if final_stdout or self.send_stdout_to_dev_null() else False
-        )
+        has_output_target = True if final_stdout or self.send_stdout_to_dev_null() else False
         if not self.pipes:
             return
         elif final_stdout is None:
@@ -345,9 +338,9 @@ class BaseExtractor(object):
             self.file_count += len(filenames)
             path = path[start_index:]
             for filename in filenames:
-                if ExtractorBuilder.try_by_mimetype(
+                if ExtractorBuilder.try_by_mimetype(filename) or ExtractorBuilder.try_by_extension(
                     filename
-                ) or ExtractorBuilder.try_by_extension(filename):
+                ):
                     self.included_archives.append(os.path.join(path, filename))
 
     def check_contents(self):
@@ -403,12 +396,8 @@ class BaseExtractor(object):
 
     def check_success(self, got_files):
         error_index, error_code = self.first_bad_exit_code()
-        logger.debug(
-            "success results: %s %s %s" % (got_files, error_index, self.exit_codes)
-        )
-        if self.is_fatal_error(error_code) or (
-            (not got_files) and (error_code is not None)
-        ):
+        logger.debug("success results: %s %s %s" % (got_files, error_index, self.exit_codes))
+        if self.is_fatal_error(error_code) or ((not got_files) and (error_code is not None)):
             command = " ".join(self.pipes[error_index][0])
             self.pw_prompt = False  # Don't silently fail with wrong password
             raise ExtractorError(
@@ -486,9 +475,7 @@ class CompressionExtractor(BaseExtractor):
         # compression extensions, even if those files shouldn't actually be
         # handled this way.  So, we call out to the file command to do a quick
         # check and make sure this actually looks like a compressed file.
-        if "compress" not in [
-            match[0] for match in ExtractorBuilder.try_by_magic(self.filename)
-        ]:
+        if "compress" not in [match[0] for match in ExtractorBuilder.try_by_magic(self.filename)]:
             raise ExtractorError("doesn't look like a compressed file")
         yield self.basename()
 
@@ -573,9 +560,7 @@ class DebExtractor(TarExtractor):
         encoding = mimetypes.guess_type(data_filename)[1]
         if not encoding:
             raise ExtractorError("data.tar file has unrecognized encoding")
-        self.pipe(
-            ["ar", "p", self.filename, data_filename], "extracting data.tar from .deb"
-        )
+        self.pipe(["ar", "p", self.filename, data_filename], "extracting data.tar from .deb")
         self.pipe(self.decoders[encoding], "decoding data.tar")
 
     def basename(self):
@@ -594,9 +579,7 @@ class DebExtractor(TarExtractor):
 
 class DebMetadataExtractor(DebExtractor):
     def prepare(self):
-        self.pipe(
-            ["ar", "p", self.filename, "control.tar.gz"], "control.tar.gz extraction"
-        )
+        self.pipe(["ar", "p", self.filename, "control.tar.gz"], "control.tar.gz extraction")
         self.pipe(["zcat"], "control.tar.gz decompression")
 
 
@@ -646,9 +629,7 @@ class NoPipeExtractor(BaseExtractor):
         extract_fmt_args = {
             "OUTPUT_FILE": os.path.splitext(os.path.basename(self.filename))[0],
         }
-        formatted_extract_commands = [
-            x.format(**extract_fmt_args) for x in self.extract_command
-        ]
+        formatted_extract_commands = [x.format(**extract_fmt_args) for x in self.extract_command]
 
         self.extract_pipe = formatted_extract_commands + [self.filename]
         BaseExtractor.extract_archive(self)
@@ -722,7 +703,6 @@ class SevenExtractor(NoPipeExtractor):
     file_type = "7z file"
     list_command = ["7z", "l", "-ba"]
     border_re = re.compile("^[- ]+$")
-    extract_command = ["7z", "x"]
     space_re = re.compile(" ")
 
     @property
@@ -927,19 +907,17 @@ class BaseHandler(object):
 
     def handle(self):
         command = "find"
-        status = subprocess.call(
-            [
-                "find",
-                self.extractor.target,
-                "-type",
-                "d",
-                "-exec",
-                "chmod",
-                "u+rwx",
-                "{}",
-                ";",
-            ]
-        )
+        status = subprocess.call([
+            "find",
+            self.extractor.target,
+            "-type",
+            "d",
+            "-exec",
+            "chmod",
+            "u+rwx",
+            "{}",
+            ";",
+        ])
         if status == 0:
             command = "chmod"
             status = subprocess.call(["chmod", "-R", "u+rwX", self.extractor.target])
@@ -950,9 +928,7 @@ class BaseHandler(object):
     def set_target(self, target, checker):
         self.target = checker(target).check()
         if self.target != target:
-            logger.warning(
-                "extracting %s to %s" % (self.extractor.filename, self.target)
-            )
+            logger.warning("extracting %s to %s" % (self.extractor.filename, self.target))
 
 
 # The "where to extract" table, with options and archive types.
@@ -983,9 +959,7 @@ class FlatHandler(BaseHandler):
             if not os.path.isdir(newdir):
                 os.makedirs(newdir)
             for filename in filenames:
-                os.rename(
-                    os.path.join(curdir, filename), os.path.join(newdir, filename)
-                )
+                os.rename(os.path.join(curdir, filename), os.path.join(newdir, filename))
             os.rmdir(curdir)
 
 
@@ -1011,9 +985,7 @@ class MatchHandler(BaseHandler):
         )
 
     def organize(self):
-        source = os.path.join(
-            self.extractor.target, os.listdir(self.extractor.target)[0]
-        )
+        source = os.path.join(self.extractor.target, os.listdir(self.extractor.target)[0])
         if os.path.isdir(source):
             checker = DirectoryChecker
         else:
@@ -1059,9 +1031,7 @@ class BombHandler(BaseHandler):
 @total_ordering
 class BasePolicy(object):
     try:
-        size = fcntl.ioctl(
-            sys.stdout.fileno(), termios.TIOCGWINSZ, struct.pack("HHHH", 0, 0, 0, 0)
-        )
+        size = fcntl.ioctl(sys.stdout.fileno(), termios.TIOCGWINSZ, struct.pack("HHHH", 0, 0, 0, 0))
         width = struct.unpack("HHHH", size)[1]
     except IOError:
         width = 80
@@ -1155,9 +1125,7 @@ class OneEntryPolicy(BasePolicy):
         question.append(" Expected: " + extractor.basename())
         question.append("   Actual: " + extractor.content_name)
         choice_vars = (extractor.content_type, extractor.basename())
-        self.choices = [
-            text % choice_vars[: text.count("%s")] for text in self.choice_template
-        ]
+        self.choices = [text % choice_vars[: text.count("%s")] for text in self.choice_template]
         self.current_policy = self.permanent_policy or self.ask_question(question)
 
     def ok_for_match(self):
@@ -1191,9 +1159,7 @@ class RecursionPolicy(BasePolicy):
 
     def prep(self, current_filename, target, extractor):
         archive_count = len(extractor.included_archives)
-        if (self.permanent_policy is not None) or (
-            (archive_count * 10) <= extractor.file_count
-        ):
+        if (self.permanent_policy is not None) or ((archive_count * 10) <= extractor.file_count):
             self.current_policy = self.permanent_policy or RECURSE_NOT_NOW
             return
         question = self.wrap(
@@ -1213,12 +1179,10 @@ class RecursionPolicy(BasePolicy):
                 break
             print(
                 "\n%s\n"
-                % "\n".join(
-                    [
-                        os.path.join(target, included_root, filename)
-                        for filename in extractor.included_archives
-                    ]
-                )
+                % "\n".join([
+                    os.path.join(target, included_root, filename)
+                    for filename in extractor.included_archives
+                ])
             )
         if self.current_policy in (RECURSE_ALWAYS, RECURSE_NEVER):
             self.permanent_policy = self.current_policy
@@ -1427,9 +1391,7 @@ class ExtractorBuilder(object):
 
     def try_by_magic(self, filename):
         try:
-            process = subprocess.Popen(
-                ["file", "-zL", filename], stdout=subprocess.PIPE
-            )
+            process = subprocess.Popen(["file", "-zL", filename], stdout=subprocess.PIPE)
             status = process.wait()
             if status != 0:
                 return []
@@ -1524,9 +1486,9 @@ class ExtractionAction(BaseAction):
                 print("%s/" % (filename,))
                 new_filenames = os.listdir(filename)
                 new_filenames = sorted(new_filenames, key=cmp_to_key(reverser))
-                filenames.extend(
-                    [pathjoin(filename, new_filename) for new_filename in new_filenames]
-                )
+                filenames.extend([
+                    pathjoin(filename, new_filename) for new_filename in new_filenames
+                ])
             else:
                 print(filename)
 
@@ -1610,13 +1572,11 @@ class ExtractorApplication(object):
         # get the lists of built-in extensions and combine them
         ext_map_base = set(ExtractorBuilder.extension_map.keys())
         ext_map = set(
-            itertools.chain(
-                *[
-                    x["extensions"]
-                    for x in ExtractorBuilder.extractor_map.values()
-                    if "extensions" in x
-                ]
-            )
+            itertools.chain(*[
+                x["extensions"]
+                for x in ExtractorBuilder.extractor_map.values()
+                if "extensions" in x
+            ])
         )
         ext_map = ext_map_base.union(ext_map)
 
@@ -1670,10 +1630,7 @@ class ExtractorApplication(object):
             "--one-entry",
             dest="one_entry_default",
             default=None,
-            help=(
-                "specify extraction policy for one-entry "
-                + "archives: inside/rename/here"
-            ),
+            help=("specify extraction policy for one-entry " + "archives: inside/rename/here"),
         )
         parser.add_option(
             "-n",
@@ -1795,9 +1752,7 @@ class ExtractorApplication(object):
             self.current_extractor = extractor  # For the abort() method.
             error = self.action.run(filename, extractor)
             if error:
-                errors.append(
-                    (extractor.file_type, extractor.encoding, error, extractor.stderr)
-                )
+                errors.append((extractor.file_type, extractor.encoding, error, extractor.stderr))
                 if extractor.target is not None:
                     self.clean_destination(extractor.target)
             else:

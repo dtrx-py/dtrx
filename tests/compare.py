@@ -114,9 +114,7 @@ class ExtractorTest(object):
             self.input = self.input + "\n"
 
     def start_proc(self, command, stdin=None, output=None):
-        process = subprocess.Popen(
-            command, stdin=subprocess.PIPE, stdout=output, stderr=output
-        )
+        process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=output, stderr=output)
         if stdin:
             process.stdin.write(bytes(str(stdin).encode("utf-8")))
         process.stdin.close()
@@ -194,9 +192,7 @@ class ExtractorTest(object):
             raise ExtractorTestError("cleanup exited with status code %s" % (status,))
 
     def show_pass(self):
-        self.status_writer.show(
-            "Passed %i/%i: %s" % (self.test_num, NUM_TESTS, self.name)
-        )
+        self.status_writer.show("Passed %i/%i: %s" % (self.test_num, NUM_TESTS, self.name))
         return "passed"
 
     def show_report(self, status, message=None):
@@ -295,9 +291,7 @@ class TestsRunner(object):
                 Loader=yaml.FullLoader,
             )
         self.name_regexps = [re.compile(s) for s in sys.argv[1:]]
-        self.tests = [
-            ExtractorTest(**data) for data in self.test_data if self.wanted_test(data)
-        ]
+        self.tests = [ExtractorTest(**data) for data in self.test_data if self.wanted_test(data)]
         self.add_subdir_tests()
 
     def wanted_test(self, data):
@@ -307,18 +301,14 @@ class TestsRunner(object):
 
     def add_subdir_tests(self):
         for odata in self.test_data:
-            if (
-                (not self.wanted_test(odata))
-                or "directory" in odata
-                or ("baseline" not in odata)
-            ):
+            if (not self.wanted_test(odata)) or "directory" in odata or ("baseline" not in odata):
                 continue
             data = odata.copy()
             data["name"] += " in .."
             data["directory"] = "inside-dir"
-            data["filenames"] = " ".join(
-                ["../%s" % filename for filename in data.get("filenames", "").split()]
-            )
+            data["filenames"] = " ".join([
+                "../%s" % filename for filename in data.get("filenames", "").split()
+            ])
             self.tests.append(ExtractorTest(**data))
 
     def run(self):
