@@ -601,6 +601,25 @@ class NoPipeExtractor(BaseExtractor):
         return BaseExtractor.get_filenames(self)
 
 
+class FATDiskImageExtractor(NoPipeExtractor):
+    file_type = "FAT disk image"
+    list_command = ["mdir", "-b", "-a", "-/", "-i"]
+    extract_command = ["mcopy", "-nspm", "-i"]
+
+    def extract_archive(self):
+        command = self.extract_command + [self.filename, "::", "."]
+        self.extract_pipe = command
+        BaseExtractor.extract_archive(self)
+
+    def get_filenames(self):
+        command = self.list_command + [self.filename, "::"]
+        self.list_pipe = command
+        for line in NoPipeExtractor.get_filenames(self):
+            # mtools prefixes with ::/ for the default drive, remove that.
+            yield re.sub(r'^::[/\\]', '', line)
+        self.archive.close()
+
+
 class ZipExtractor(NoPipeExtractor):
     file_type = "Zip file"
     list_command = ["zipinfo", "-1"]
@@ -1160,6 +1179,12 @@ class ExtractorBuilder(object):
             "mimetypes": ("x-tar",),
             "extensions": ("tar",),
             "magic": ("POSIX tar archive",),
+        },
+        "fat": {
+            "extractors": (FATDiskImageExtractor,),
+            "mimetypes": ("x-msdos", "x-fat"),
+            "extensions": ("img", "ima", "vfd"),
+            "magic": ("DOS/MBR boot sector", "FAT12", "FAT16", "FAT32"),
         },
         "zip": {
             "extractors": (ZipExtractor, SevenExtractor),
