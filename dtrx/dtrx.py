@@ -616,7 +616,7 @@ class FATDiskImageExtractor(NoPipeExtractor):
         self.list_pipe = command
         for line in NoPipeExtractor.get_filenames(self):
             # mtools prefixes with ::/ for the default drive, remove that.
-            yield re.sub(r'^::[/\\]', '', line)
+            yield re.sub(r"^::[/\\]", "", line)
         self.archive.close()
 
 
@@ -1183,7 +1183,7 @@ class ExtractorBuilder(object):
         "fat": {
             "extractors": (FATDiskImageExtractor,),
             "mimetypes": ("x-msdos", "x-fat"),
-            "extensions": ("img", "ima", "vfd"),
+            "extensions": ("ima", "vfd"),
             "magic": ("DOS/MBR boot sector", "FAT12", "FAT16", "FAT32"),
         },
         "zip": {
