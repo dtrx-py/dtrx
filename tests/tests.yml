@@ -987,3 +987,10 @@
   filenames: getting-started.crx
   baseline: |
     unzip -q $1 -d getting-started
+
+- name: whl
+  filenames: test-1.23.whl
+  baseline: |
+    mkdir test-1.23
+    cd test-1.23
+    unzip -q ../$1

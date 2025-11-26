@@ -1357,11 +1357,22 @@ class ExtractorBuilder(object):
             status = process.wait()
             if status != 0:
                 return []
+            # if output contains 'ERROR:[', there was an error unzipping the
+            # first archive entry. re-run without -z.
+            output = process.stdout.readline().decode("ascii")
+            process.stdout.close()
+            if "ERROR:[" in output:
+                process.stdout.close()
+                process = subprocess.Popen(["file", "-L", filename], stdout=subprocess.PIPE)
+                status = process.wait()
+                if status != 0:
+                    return []
+                output = process.stdout.readline().decode("ascii")
+                process.stdout.close()
+
         except FileNotFoundError:
             logger.error("'file' command not found, skipping magic test")
             return []
-        output = process.stdout.readline().decode("ascii")
-        process.stdout.close()
         if output.startswith("%s: " % filename):
             output = output[len(filename) + 2 :]
         mimes = self.magic_map_matches(output, self.magic_mime_map)
