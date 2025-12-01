@@ -1353,22 +1353,24 @@ class ExtractorBuilder(object):
 
     def try_by_magic(self, filename):
         try:
-            process = subprocess.Popen(["file", "-zL", filename], stdout=subprocess.PIPE)
-            status = process.wait()
-            if status != 0:
+            result = subprocess.run(
+                ["file", "-zL", filename], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+            )
+            if result.returncode != 0:
                 return []
             # if output contains 'ERROR:[', there was an error unzipping the
             # first archive entry. re-run without -z.
-            output = process.stdout.readline().decode("ascii")
-            process.stdout.close()
+            output = result.stdout.split("\n")[0]
             if "ERROR:[" in output:
-                process.stdout.close()
-                process = subprocess.Popen(["file", "-L", filename], stdout=subprocess.PIPE)
-                status = process.wait()
-                if status != 0:
+                result = subprocess.run(
+                    ["file", "-L", filename],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                )
+                if result.returncode != 0:
                     return []
-                output = process.stdout.readline().decode("ascii")
-                process.stdout.close()
+                output = result.stdout.split("\n")[0]
 
         except FileNotFoundError:
             logger.error("'file' command not found, skipping magic test")
