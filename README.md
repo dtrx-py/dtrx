@@ -35,7 +35,7 @@ software** should be attributed to the original author, Brett Smith @brettcs:
 
 https://github.com/brettcs/dtrx
 
-See the original [`README`](README) for more details on what this does!
+See the original [`README`](archived/README) for more details on what this does!
 
 ## Changes in this repo
 
