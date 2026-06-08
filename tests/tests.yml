@@ -102,6 +102,13 @@
     cd test-lots-files
     unar -D ../$1 || unrar x ../$1
 
+- name: basic .a
+  filenames: test-1.23.a
+  baseline: |
+    mkdir test-1.23
+    cd test-1.23
+    ar x ../$1
+
 - name: basic .arj
   filenames: test-1.23.arj
   baseline: |
@@ -933,6 +940,7 @@
   grep: |
     7z
     Z
+    a
     arj
     br
     bz2

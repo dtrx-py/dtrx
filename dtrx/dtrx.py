@@ -838,6 +838,12 @@ class UnarchiverExtractor(NoPipeExtractor):
             yield line[:end_index].strip()
 
 
+class ArExtractor(NoPipeExtractor):
+    file_type = "AR archive"
+    extract_command = ["ar", "-x"]
+    list_command = ["ar", "-t"]
+
+
 class ArjExtractor(NoPipeExtractor):
     file_type = "ARJ archive"
     list_command = ["arj", "v"]
@@ -1215,6 +1221,12 @@ class ExtractorBuilder(object):
             "mimetypes": ("rar",),
             "extensions": ("rar",),
             "magic": ("RAR archive",),
+        },
+        "ar": {
+            "extractors": (ArExtractor,),
+            "mimetypes": ("application/x-archive",),
+            "extensions": ("a",),
+            "magic": ("current ar archive",),
         },
         "arj": {
             "extractors": (ArjExtractor,),
