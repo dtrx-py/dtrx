@@ -31,11 +31,9 @@ dtrx yolo.tar.gz
 ```
 
 This is a copy-paste of the original dtrx repo, and **all credit for this
-software** should be attributed to the original author, Brett Smith @brettcs:
+software** should be attributed to the original author, Brett Smith [@brettcs](https://github.com/brettcs):
 
 https://github.com/brettcs/dtrx
-
-See the original [`README`](README) for more details on what this does!
 
 ## Changes in this repo
 
