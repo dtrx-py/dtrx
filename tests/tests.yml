@@ -953,6 +953,7 @@
     gem
     gz
     hdr
+    ima
     jar
     lha
     lrz
@@ -978,6 +979,7 @@
     tgz
     tlz
     txz
+    vfd
     xpi
     xz
     zip
