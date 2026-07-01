@@ -8,6 +8,7 @@ pyversions](https://img.shields.io/pypi/pyversions/dtrx.svg?style=for-the-badge&
 <!-- toc -->
 
 - [dtrx](#dtrx)
+  - [Platform support](#platform-support)
   - [Changes in this repo](#changes-in-this-repo)
   - [Development](#development)
     - [Contributions](#contributions)
@@ -34,6 +35,14 @@ This is a copy-paste of the original dtrx repo, and **all credit for this
 software** should be attributed to the original author, Brett Smith [@brettcs](https://github.com/brettcs):
 
 https://github.com/brettcs/dtrx
+
+## Platform support
+
+dtrx works by wrapping standard Unix tools (`tar`, `gzip`, `unzip`, `7z`,
+`cpio`, and friends), so it runs on Unix-like systems (Linux, macOS, the BSDs)
+and **not on native Windows** — `pip install dtrx` is refused there. POSIX-like
+environments on Windows such as Cygwin, MSYS2, and MinGW are not blocked, and
+dtrx may work in them if the tools it wraps are installed.
 
 ## Changes in this repo
 
