@@ -929,6 +929,11 @@
     exec [ "$(cat test-pw)" = "test-pw" ]
   cleanup: rm -rf test-pw
 
+- name: password unrar noninteractive with wrong password
+  filenames: test-pw.rar
+  options: "-n -p wrongpassword"
+  error: true
+
 - name: brotli
   filenames: test-text.br
   baseline: |
