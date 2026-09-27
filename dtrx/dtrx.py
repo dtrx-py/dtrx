@@ -837,6 +837,9 @@ class UnarchiverExtractor(NoPipeExtractor):
             end_index = line.rfind("(")
             yield line[:end_index].strip()
 
+    def is_fatal_error(self, status):
+        return (status or 0) > 0
+
 
 class ArExtractor(NoPipeExtractor):
     file_type = "AR archive"
