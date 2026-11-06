@@ -52,6 +52,7 @@ DTRX_SCRIPT = os.path.realpath("../dtrx/dtrx.py")
 SHELL_CMD = ["sh", "-se"]
 ROOT_DIR = os.path.realpath(os.curdir)
 NUM_TESTS = 0
+TIMEOUT_SECONDS = 5
 
 
 class ExtractorTestError(Exception):
@@ -123,7 +124,15 @@ class ExtractorTest(object):
     def get_results(self, command, stdin=None):
         print("Output from %s:" % (" ".join(command),), file=self.outbuffer)
         self.outbuffer.flush()
-        status = self.start_proc(command, stdin, self.outbuffer).wait(5)
+        process = self.start_proc(command, stdin, self.outbuffer)
+        try:
+            status = process.wait(TIMEOUT_SECONDS)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            process.wait()
+            raise ExtractorTestError(
+                f"{' '.join(command)} timed out after {TIMEOUT_SECONDS} seconds"
+            )
         process = subprocess.Popen(["find"], stdout=subprocess.PIPE)
         output = process.stdout.read(-1).decode("ascii", errors="ignore")
         process.stdout.close()
@@ -273,6 +282,7 @@ class ExtractorTest(object):
             result = self.check_results()
         except ExtractorTestError as error:
             result = self.show_report("ERROR", error)
+            self.clean()
         self.outbuffer.close()
         if self.directory:
             os.chdir(ROOT_DIR)
