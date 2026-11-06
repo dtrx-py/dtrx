@@ -39,9 +39,11 @@ import sys
 import tempfile
 import termios
 import textwrap
+import threading
 import traceback
 import urllib.parse as urlparse
 from functools import cmp_to_key, total_ordering
+from typing import IO
 
 
 def cmp(a, b):
@@ -98,7 +100,7 @@ mimetypes.types_map.setdefault(".gem", "application/x-ruby-gem")
 logger = logging.getLogger("dtrx-log")
 
 
-class FilenameChecker(object):
+class FilenameChecker():
     free_func = os.open
     free_args = (os.O_CREAT | os.O_EXCL,)
     free_close = os.close
@@ -142,19 +144,50 @@ class DirectoryChecker(FilenameChecker):
         return dirname
 
 
-class NonblockingRead(object):
-    iostream = None
+class PipeDrainer:
+    """Continuously read a subprocess pipe in a background thread.
 
-    def __init__(self, iostream):
-        self.iostream = iostream
+    A process blocks once it has written more than the pipe buffer holds
+    (typically 64 KiB) and nobody reads it. Waiting for such a process to
+    exit before reading its output therefore deadlocks, so we keep reading
+    while it runs and hand out what was collected on request.
+    """
 
-        fd = iostream.fileno()
-        flags = fcntl.fcntl(fd, fcntl.F_GETFL)
-        fcntl.fcntl(fd, fcntl.F_SETFL, flags | os.O_NONBLOCK)
+    chunk_size: int = 4096
 
-    def readlines(self):
-        out = self.iostream.readlines()
-        return [line.decode("ascii", "ignore") for line in out]
+    def __init__(self, stream: IO[bytes]) -> None:
+        self._stream = stream
+        self._chunks: list[bytes] = []
+        self._lock = threading.Lock()
+        self._thread = threading.Thread(target=self._drain, daemon=True)
+        self._thread.start()
+
+    def _drain(self) -> None:
+        # Read raw chunks instead of lines to support password prompts that don't end
+        # with a newline
+        fd = self._stream.fileno()
+        while True:
+            try:
+                chunk = os.read(fd, self.chunk_size)
+            except OSError:
+                break
+            if not chunk:
+                break
+            with self._lock:
+                self._chunks.append(chunk)
+
+    def read_new(self) -> str:
+        """Return everything received since the previous call."""
+        with self._lock:
+            data = b"".join(self._chunks)
+            self._chunks = []
+        return data.decode("ascii", "ignore")
+
+    def finish(self) -> str:
+        """Wait until the pipe is closed and return the unread rest."""
+        self._thread.join()
+        self._stream.close()
+        return self.read_new()
 
 
 class ExtractorError(Exception):
@@ -168,7 +201,7 @@ class ExtractorUnusable(Exception):
 EXTRACTION_ERRORS = (ExtractorError, ExtractorUnusable, OSError, IOError)
 
 
-class BaseExtractor(object):
+class BaseExtractor():
     decoders = {
         "bzip2": ["bzcat"],
         "gzip": ["zcat"],
@@ -210,6 +243,8 @@ class BaseExtractor(object):
         self.stderr = ""
         self.pw_prompted = False
         self.exit_codes = []
+        self.stderr_drainers = {}
+        self.stdout_drainers = {}
         try:
             self.archive = open(filename, "r")
         except (IOError, OSError) as error:
@@ -224,16 +259,25 @@ class BaseExtractor(object):
     def add_process(self, processes, command, stdin, stdout):
         try:
             logger.debug("running command: {}".format(command))
-            processes.append(
-                subprocess.Popen(command, stdin=stdin, stdout=stdout, stderr=subprocess.PIPE)
-            )
+            process = subprocess.Popen(command, stdin=stdin, stdout=stdout, stderr=subprocess.PIPE)
         except OSError as error:
             if error.errno == errno.ENOENT:
                 raise ExtractorUnusable("could not run %s" % (command[0],))
             raise
+        self.stderr_drainers[process] = PipeDrainer(process.stderr)
+        processes.append(process)
 
     def timeout_check(self, pipe):
         pass
+
+    def pass_through_password_prompt(self, output, show_all_output=False):
+        """Show a password prompt the extraction tool printed to a pipe."""
+        self.stderr += output
+        lines = output.splitlines(keepends=True)
+        if lines and "password" in lines[-1]:
+            sys.stdout.write("\n" + (output if show_all_output else lines[-1]))
+            sys.stdout.flush()
+            self.pw_prompted = True
 
     def wait_for_exit(self, pipe):
         while True:
@@ -277,11 +321,17 @@ class BaseExtractor(object):
             else:
                 stdout = subprocess.PIPE
             self.add_process(processes, command, stdin, stdout)
+        if not has_output_target:
+            # Nobody else reads the last process’ output: Drain it
+            last_process = processes[-1]
+            self.stdout_drainers[last_process] = PipeDrainer(last_process.stdout)
         self.exit_codes = [self.wait_for_exit(pipe) for pipe in processes]
         for pipe in processes:
             # Grab any remaining error messages
-            errs = pipe.stderr.readlines()
-            self.stderr += b"".join(errs).decode("ascii", "ignore")
+            self.stderr += self.stderr_drainers.pop(pipe).finish()
+        for drainer in self.stdout_drainers.values():
+            drainer.finish()
+        self.stdout_drainers = {}
         self.archive.close()
         for index in range(last_pipe):
             processes[index].stdout.close()
@@ -416,6 +466,8 @@ class BaseExtractor(object):
         self.archive.close()
         for process in processes:
             process.stdout.close()
+            # Listing has never reported error output, so it’s discarded
+            self.stderr_drainers.pop(process).finish()
         self.check_success(False)
 
 
@@ -619,16 +671,8 @@ class ZipExtractor(NoPipeExtractor):
         return (status or 0) > 1
 
     def timeout_check(self, pipe):
-        nbs = NonblockingRead(pipe.stderr)
-        errs = nbs.readlines()
-
-        self.stderr += "".join(errs)
-
         # pass through the password prompt, if unzip sent one
-        if errs and "password" in errs[-1]:
-            sys.stdout.write("\n" + errs[-1])
-            sys.stdout.flush()
-            self.pw_prompted = True
+        self.pass_through_password_prompt(self.stderr_drainers[pipe].read_new())
 
 
 class LZHExtractor(ZipExtractor):
@@ -688,16 +732,11 @@ class SevenExtractor(NoPipeExtractor):
         return False
 
     def timeout_check(self, pipe):
-        nbs = NonblockingRead(pipe.stdout)
-        errs = nbs.readlines()
-
-        self.stderr += "".join(errs)
-
-        # pass through the password prompt, if 7z sent one
-        if errs and "password" in errs[-1]:
-            sys.stdout.write("\n" + errs[-1])
-            sys.stdout.flush()
-            self.pw_prompted = True
+        # pass through the password prompt, if 7z sent one (on stdout)
+        drainer = self.stdout_drainers.get(pipe)
+        if drainer is None:
+            return
+        self.pass_through_password_prompt(drainer.read_new())
 
 
 class ZstandardExtractor(NoPipeExtractor):
@@ -804,16 +843,10 @@ class RarExtractor(NoPipeExtractor):
         self.archive.close()
 
     def timeout_check(self, pipe):
-        nbs = NonblockingRead(pipe.stderr)
-        errs = nbs.readlines()
-
-        self.stderr += "".join(errs)
-
         # pass through the password prompt, if unrar sent one
-        if errs and "password" in errs[-1]:
-            sys.stdout.write("\n" + "".join(errs))
-            sys.stdout.flush()
-            self.pw_prompted = True
+        self.pass_through_password_prompt(
+            self.stderr_drainers[pipe].read_new(), show_all_output=True
+        )
 
 
 class UnarchiverExtractor(NoPipeExtractor):
@@ -870,7 +903,7 @@ class ArjExtractor(NoPipeExtractor):
         self.archive.close()
 
 
-class BaseHandler(object):
+class BaseHandler():
     def __init__(self, extractor, options):
         self.extractor = extractor
         self.options = options
@@ -974,7 +1007,7 @@ class MatchHandler(BaseHandler):
         self.extractor.included_root = "./"
 
 
-class EmptyHandler(object):
+class EmptyHandler():
     target = ""
 
     @staticmethod
@@ -1000,7 +1033,7 @@ class BombHandler(BaseHandler):
 
 
 @total_ordering
-class BasePolicy(object):
+class BasePolicy():
     try:
         size = fcntl.ioctl(sys.stdout.fileno(), termios.TIOCGWINSZ, struct.pack("HHHH", 0, 0, 0, 0))
         width = struct.unpack("HHHH", size)[1]
@@ -1162,7 +1195,7 @@ class RecursionPolicy(BasePolicy):
         return self.current_policy in (RECURSE_ALWAYS, RECURSE_ONCE)
 
 
-class ExtractorBuilder(object):
+class ExtractorBuilder():
     extractor_map = {
         "tar": {
             "extractors": (TarExtractor,),
@@ -1415,7 +1448,7 @@ class ExtractorBuilder(object):
     try_by_extension = classmethod(try_by_extension)
 
 
-class BaseAction(object):
+class BaseAction():
     def __init__(self, options, filenames):
         self.options = options
         self.filenames = filenames
@@ -1519,7 +1552,7 @@ class ListAction(BaseAction):
         return error
 
 
-class ExtractorApplication(object):
+class ExtractorApplication():
     def __init__(self, arguments):
         for signal_num in (signal.SIGINT, signal.SIGTERM):
             signal.signal(signal_num, self.abort)
