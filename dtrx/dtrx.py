@@ -100,7 +100,7 @@ mimetypes.types_map.setdefault(".gem", "application/x-ruby-gem")
 logger = logging.getLogger("dtrx-log")
 
 
-class FilenameChecker():
+class FilenameChecker:
     free_func = os.open
     free_args = (os.O_CREAT | os.O_EXCL,)
     free_close = os.close
@@ -201,7 +201,7 @@ class ExtractorUnusable(Exception):
 EXTRACTION_ERRORS = (ExtractorError, ExtractorUnusable, OSError, IOError)
 
 
-class BaseExtractor():
+class BaseExtractor:
     decoders = {
         "bzip2": ["bzcat"],
         "gzip": ["zcat"],
@@ -903,7 +903,7 @@ class ArjExtractor(NoPipeExtractor):
         self.archive.close()
 
 
-class BaseHandler():
+class BaseHandler:
     def __init__(self, extractor, options):
         self.extractor = extractor
         self.options = options
@@ -1007,7 +1007,7 @@ class MatchHandler(BaseHandler):
         self.extractor.included_root = "./"
 
 
-class EmptyHandler():
+class EmptyHandler:
     target = ""
 
     @staticmethod
@@ -1033,7 +1033,7 @@ class BombHandler(BaseHandler):
 
 
 @total_ordering
-class BasePolicy():
+class BasePolicy:
     try:
         size = fcntl.ioctl(sys.stdout.fileno(), termios.TIOCGWINSZ, struct.pack("HHHH", 0, 0, 0, 0))
         width = struct.unpack("HHHH", size)[1]
@@ -1195,7 +1195,7 @@ class RecursionPolicy(BasePolicy):
         return self.current_policy in (RECURSE_ALWAYS, RECURSE_ONCE)
 
 
-class ExtractorBuilder():
+class ExtractorBuilder:
     extractor_map = {
         "tar": {
             "extractors": (TarExtractor,),
@@ -1448,7 +1448,7 @@ class ExtractorBuilder():
     try_by_extension = classmethod(try_by_extension)
 
 
-class BaseAction():
+class BaseAction:
     def __init__(self, options, filenames):
         self.options = options
         self.filenames = filenames
@@ -1552,7 +1552,7 @@ class ListAction(BaseAction):
         return error
 
 
-class ExtractorApplication():
+class ExtractorApplication:
     def __init__(self, arguments):
         for signal_num in (signal.SIGINT, signal.SIGTERM):
             signal.signal(signal_num, self.abort)
