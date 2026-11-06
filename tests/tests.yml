@@ -628,6 +628,19 @@
     cd subsubdir
     zcat test-text.gz > test-text
 
+- name: extraction with lots of stderr output does not hang
+  filenames: test-stderr-flood.tar
+  prerun: |
+    mkdir test-stderr-flood
+    cd test-stderr-flood
+    seq -f "file-with-a-long-name-to-produce-much-stderr-%04g" 2000 | xargs touch
+    cd ..
+    tar --mtime=2099-04-02 -cf ${1}test-stderr-flood.tar test-stderr-flood
+    rm -rf test-stderr-flood
+  cleanup: rm -f ${1}test-stderr-flood.tar
+  baseline: |
+    tar -xf $1
+
 - name: extracting file with bad extension
   filenames: test-1.23.bin
   prerun: cp ${1}test-1.23.tar.gz ${1}test-1.23.bin
